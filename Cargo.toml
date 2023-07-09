@@ -1,0 +1,14 @@
+[package]
+name = "norg-pandoc-tree-sitter"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pandoc_ast = "0.8.4"
+tree-sitter = "0.20.10"
+tree-sitter-norg = { git = "https://github.com/nvim-neorg/tree-sitter-norg.git" }
+
+[build-dependencies]
+cc = "1.0.79"
