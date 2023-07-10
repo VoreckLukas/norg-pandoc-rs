@@ -1,6 +1,6 @@
 use std::{env, fs};
 
-use pandoc_ast::{Block, Inline, Map, Pandoc};
+use pandoc_ast::{Block, Inline, ListNumberDelim, ListNumberStyle, Map, Pandoc};
 use tree_sitter::{Parser, TreeCursor};
 
 fn main() {
@@ -24,10 +24,19 @@ fn main() {
     };
 }
 
+#[derive(Debug)]
 enum AstNode {
     Document(Pandoc),
     Blocks(Vec<Block>),
     Inlines(Vec<Inline>),
+    List(Vec<Vec<Block>>, ListType, usize),
+    Quote(Vec<Block>, usize),
+}
+
+#[derive(Debug)]
+enum ListType {
+    Ordered,
+    Unordered,
 }
 
 fn parse_tree(walker: &mut TreeCursor, source: &str) -> AstNode {
@@ -52,7 +61,7 @@ fn parse_tree(walker: &mut TreeCursor, source: &str) -> AstNode {
         }
 
         "paragraph" => {
-            let mut curblocks = if walker.goto_first_child() {
+            let mut blocks = if walker.goto_first_child() {
                 if let AstNode::Inlines(inlines) = parse_tree(walker, source) {
                     vec![Block::Para(inlines)]
                 } else {
@@ -62,15 +71,238 @@ fn parse_tree(walker: &mut TreeCursor, source: &str) -> AstNode {
                 vec![]
             };
 
+            parse_blocks(&mut blocks, walker, source);
+
+            AstNode::Blocks(blocks)
+        }
+
+        "generic_list" => {
+            let mut blocks = if walker.goto_first_child() {
+                if let AstNode::List(mut list, kind, nesting) = parse_tree(walker, source) {
+                    for _ in 1..nesting {
+                        match kind {
+                            ListType::Ordered => {
+                                list = vec![vec![Block::OrderedList(
+                                    (
+                                        1,
+                                        ListNumberStyle::DefaultStyle,
+                                        ListNumberDelim::DefaultDelim,
+                                    ),
+                                    list,
+                                )]]
+                            }
+                            ListType::Unordered => list = vec![vec![Block::BulletList(list)]],
+                        }
+                    }
+                    match kind {
+                        ListType::Ordered => vec![Block::OrderedList(
+                            (
+                                1,
+                                ListNumberStyle::DefaultStyle,
+                                ListNumberDelim::DefaultDelim,
+                            ),
+                            list,
+                        )],
+                        ListType::Unordered => vec![Block::BulletList(list)],
+                    }
+                } else {
+                    unreachable!()
+                }
+            } else {
+                unreachable!()
+            };
+
+            parse_blocks(&mut blocks, walker, source);
+
+            AstNode::Blocks(blocks)
+        }
+
+        "quote" => {
+            let mut blocks = if walker.goto_first_child() {
+                if let AstNode::Quote(mut quote, nesting) = parse_tree(walker, source) {
+                    for _ in 1..nesting {
+                        quote = vec![Block::BlockQuote(quote)]
+                    }
+                    vec![Block::BlockQuote(quote)]
+                } else {
+                    unreachable!()
+                }
+            } else {
+                unreachable!()
+            };
+
+            parse_blocks(&mut blocks, walker, source);
+
+            AstNode::Blocks(blocks)
+        }
+
+        s if s.starts_with("quote") => {
+            let mut nesting = {
+                let index = s
+                    .chars()
+                    .position(|c| c.is_ascii_digit())
+                    .unwrap_or(s.len());
+                s[index..].parse::<usize>().unwrap()
+            };
+            let mut content = if walker.goto_first_child()
+                && walker.goto_next_sibling()
+                && walker.goto_first_child()
+            {
+                if let AstNode::Inlines(inlines) = parse_tree(walker, source) {
+                    vec![Block::Para(inlines)]
+                } else {
+                    unreachable!()
+                }
+            } else {
+                unreachable!()
+            };
+
             if walker.goto_next_sibling() {
-                if let AstNode::Blocks(mut blocks) = parse_tree(walker, source) {
-                    curblocks.append(&mut blocks);
+                if let AstNode::Quote(mut quote, sub_nesting) = parse_tree(walker, source) {
+                    for _ in nesting..sub_nesting - 1 {
+                        quote = vec![Block::BlockQuote(quote)];
+                    }
+
+                    content.push(Block::BlockQuote(quote));
                 }
             } else {
                 walker.goto_parent();
             }
 
-            AstNode::Blocks(curblocks)
+            if walker.goto_next_sibling() {
+                if let AstNode::Quote(mut new_quote, new_nesting) = parse_tree(walker, source) {
+                    for _ in new_nesting..nesting {
+                        content = vec![Block::BlockQuote(content)];
+                    }
+                    content.append(&mut new_quote);
+                    nesting = new_nesting;
+                }
+            } else {
+                walker.goto_parent();
+            }
+
+            AstNode::Quote(content, nesting)
+        }
+
+        s if s.starts_with("unordered_list") => {
+            let mut nesting = {
+                let index = s
+                    .chars()
+                    .position(|c| c.is_ascii_digit())
+                    .unwrap_or(s.len());
+                s[index..].parse::<usize>().unwrap()
+            };
+            let mut content = if walker.goto_first_child()
+                && walker.goto_next_sibling()
+                && walker.goto_first_child()
+            {
+                if let AstNode::Inlines(inlines) = parse_tree(walker, source) {
+                    vec![Block::Para(inlines)]
+                } else {
+                    unreachable!()
+                }
+            } else {
+                unreachable!()
+            };
+
+            if walker.goto_next_sibling() {
+                if let AstNode::List(mut list, _, sub_nesting) = parse_tree(walker, source) {
+                    for _ in nesting..sub_nesting - 1 {
+                        list = vec![vec![Block::BulletList(list)]];
+                    }
+
+                    content.push(Block::BulletList(list))
+                }
+            } else {
+                walker.goto_parent();
+            }
+
+            let mut list = vec![content];
+
+            if walker.goto_next_sibling() {
+                if let AstNode::List(mut new_list, _, new_nesting) = parse_tree(walker, source) {
+                    for _ in new_nesting..nesting {
+                        list = vec![vec![Block::BulletList(list)]];
+                    }
+                    list.append(&mut new_list);
+                    nesting = new_nesting;
+                }
+            } else {
+                walker.goto_parent();
+            }
+
+            AstNode::List(list, ListType::Unordered, nesting)
+        }
+
+        s if s.starts_with("ordered_list") => {
+            let mut nesting = {
+                let index = s
+                    .chars()
+                    .position(|c| c.is_ascii_digit())
+                    .unwrap_or(s.len());
+                s[index..].parse::<usize>().unwrap()
+            };
+            let mut content = if walker.goto_first_child()
+                && walker.goto_next_sibling()
+                && walker.goto_first_child()
+            {
+                if let AstNode::Inlines(inlines) = parse_tree(walker, source) {
+                    vec![Block::Para(inlines)]
+                } else {
+                    unreachable!()
+                }
+            } else {
+                unreachable!()
+            };
+
+            if walker.goto_next_sibling() {
+                if let AstNode::List(mut list, _, sub_nesting) = parse_tree(walker, source) {
+                    for _ in nesting..sub_nesting - 1 {
+                        list = vec![vec![Block::OrderedList(
+                            (
+                                1,
+                                ListNumberStyle::DefaultStyle,
+                                ListNumberDelim::DefaultDelim,
+                            ),
+                            list,
+                        )]];
+                    }
+
+                    content.push(Block::OrderedList(
+                        (
+                            1,
+                            ListNumberStyle::DefaultStyle,
+                            ListNumberDelim::DefaultDelim,
+                        ),
+                        list,
+                    ))
+                }
+            } else {
+                walker.goto_parent();
+            }
+
+            let mut list = vec![content];
+
+            if walker.goto_next_sibling() {
+                if let AstNode::List(mut new_list, _, new_nesting) = parse_tree(walker, source) {
+                    for _ in new_nesting..nesting {
+                        list = vec![vec![Block::OrderedList(
+                            (
+                                1,
+                                ListNumberStyle::DefaultStyle,
+                                ListNumberDelim::DefaultDelim,
+                            ),
+                            list,
+                        )]];
+                    }
+                    list.append(&mut new_list);
+                    nesting = new_nesting;
+                }
+            } else {
+                walker.goto_parent();
+            }
+
+            AstNode::List(list, ListType::Ordered, nesting)
         }
 
         "paragraph_segment" => {
@@ -89,12 +321,6 @@ fn parse_tree(walker: &mut TreeCursor, source: &str) -> AstNode {
                 if let AstNode::Inlines(mut new_inlines) = parse_tree(walker, source) {
                     inlines.append(&mut new_inlines);
                 } else {
-                    eprintln!(
-                        "{} {}-{}",
-                        walker.node().kind(),
-                        walker.node().range().start_point,
-                        walker.node().range().end_point
-                    );
                     unreachable!()
                 }
             } else {
@@ -349,6 +575,7 @@ fn parse_tree(walker: &mut TreeCursor, source: &str) -> AstNode {
             if walker.goto_next_sibling() {
                 parse_tree(walker, source)
             } else {
+                walker.goto_parent();
                 AstNode::Inlines(vec![])
             }
         }
@@ -384,10 +611,22 @@ fn parse_inlines(inlines: &mut Vec<Inline>, walker: &mut TreeCursor, source: &st
     }
 }
 
+fn parse_blocks(blocks: &mut Vec<Block>, walker: &mut TreeCursor, source: &str) {
+    if walker.goto_next_sibling() {
+        if let AstNode::Blocks(mut new_blocks) = parse_tree(walker, source) {
+            blocks.append(&mut new_blocks);
+        } else {
+            unreachable!()
+        }
+    } else {
+        walker.goto_parent();
+    }
+}
+
 #[cfg(debug_assertions)]
 fn debug_tree(tree: &mut TreeCursor, indentlevel: usize) {
     let indent = " ".repeat(indentlevel * 3);
-    eprintln!("{indent}{}", tree.node().kind());
+    eprintln!("{}{}", indent, tree.node().kind());
     if tree.goto_first_child() {
         debug_tree(tree, indentlevel + 1);
     }
