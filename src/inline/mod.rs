@@ -39,6 +39,21 @@ pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
 
         "link" => LinkedList::from([link::parse(parse_meta)]),
 
+        "escape_sequence" => {
+            if parse_meta.tree.goto_first_child() && parse_meta.tree.goto_next_sibling() {
+                let char = parse_meta
+                    .tree
+                    .node()
+                    .utf8_text(parse_meta.source)
+                    .unwrap()
+                    .to_owned();
+                parse_meta.tree.goto_parent();
+                LinkedList::from([Inline::Str(char)])
+            } else {
+                unreachable!()
+            }
+        }
+
         "_line_break" => LinkedList::from([Inline::SoftBreak]),
 
         "_word" => LinkedList::from([Inline::Str(
