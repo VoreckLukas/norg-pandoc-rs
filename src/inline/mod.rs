@@ -5,10 +5,11 @@ use pandoc_ast::Inline;
 use crate::Meta;
 
 mod attached;
+mod link;
 
 pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
     let mut inlines = match parse_meta.tree.node().kind() {
-        "paragraph_segment" => {
+        "paragraph" | "paragraph_segment" => {
             if parse_meta.tree.goto_first_child() {
                 parse(parse_meta)
             } else {
@@ -36,6 +37,8 @@ pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
 
         "verbatim" => LinkedList::from([attached::parse(parse_meta, attached::Type::Code)]),
 
+        "link" => LinkedList::from([link::parse(parse_meta)]),
+
         "_line_break" => LinkedList::from([Inline::SoftBreak]),
 
         "_word" => LinkedList::from([Inline::Str(
@@ -47,7 +50,7 @@ pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
                 .to_owned(),
         )]),
 
-        "_close" | "_open" => LinkedList::new(),
+        "_begin" | "_end" | "_close" | "_open" => LinkedList::new(),
 
         "_space" => LinkedList::from([Inline::Space]),
 
