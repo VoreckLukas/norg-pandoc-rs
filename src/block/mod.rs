@@ -16,6 +16,14 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
 
         "quote" => quote::parse(parse_meta),
 
+        "_paragraph_break" => {
+            return if parse_meta.tree.goto_next_sibling() {
+                parse(parse_meta)
+            } else {
+                VecDeque::default()
+            }
+        }
+
         _ => {
             eprintln!("{} not implemented", parse_meta.tree.node().kind());
             Block::Plain(vec![Inline::Str(
