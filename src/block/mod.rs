@@ -4,6 +4,7 @@ use pandoc_ast::{Block, Inline};
 
 use crate::Meta;
 
+mod heading;
 mod list;
 mod paragraph;
 mod quote;
@@ -16,10 +17,13 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
 
         "quote" => quote::parse(parse_meta),
 
-        "_paragraph_break" => {
+        s if s.starts_with("heading") => heading::parse(parse_meta),
+
+        "_line_break" | "_paragraph_break" => {
             return if parse_meta.tree.goto_next_sibling() {
                 parse(parse_meta)
             } else {
+                parse_meta.tree.goto_parent();
                 VecDeque::default()
             }
         }

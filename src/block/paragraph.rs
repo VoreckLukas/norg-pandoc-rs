@@ -9,8 +9,5 @@ pub fn parse(parse_meta: &mut Meta) -> Block {
         vec![]
     };
 
-    // Skip the paragraph break
-    parse_meta.tree.goto_next_sibling();
-
     Block::Para(inline)
 }
