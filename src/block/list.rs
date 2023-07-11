@@ -1,12 +1,19 @@
 use std::collections::LinkedList;
 
-use pandoc_ast::Block;
+use pandoc_ast::{Block, ListNumberDelim, ListNumberStyle};
 
 use crate::{inline, Meta};
 
 enum ListType {
     Unordered,
+    Ordered,
 }
+
+const DEFAULT_ORDERED_ATTR: (i64, ListNumberStyle, ListNumberDelim) = (
+    1,
+    ListNumberStyle::DefaultStyle,
+    ListNumberDelim::DefaultDelim,
+);
 
 pub fn parse(parse_meta: &mut Meta) -> Block {
     if parse_meta.tree.goto_first_child() {
@@ -19,6 +26,12 @@ pub fn parse(parse_meta: &mut Meta) -> Block {
                 }
                 Block::BulletList(list)
             }
+            ListType::Ordered => {
+                for _ in 1..nesting {
+                    list = vec![vec![Block::OrderedList(DEFAULT_ORDERED_ATTR, list)]];
+                }
+                Block::OrderedList(DEFAULT_ORDERED_ATTR, list)
+            }
         }
     } else {
         unreachable!()
@@ -28,6 +41,7 @@ pub fn parse(parse_meta: &mut Meta) -> Block {
 fn parse_list(parse_meta: &mut Meta) -> (LinkedList<Vec<Block>>, ListType, usize) {
     let kind = match parse_meta.tree.node().kind() {
         s if s.starts_with("unordered_list") => ListType::Unordered,
+        s if s.starts_with("ordered_list") => ListType::Ordered,
         _ => unreachable!(),
     };
 
@@ -63,6 +77,12 @@ fn parse_list(parse_meta: &mut Meta) -> (LinkedList<Vec<Block>>, ListType, usize
                 }
                 content.push(Block::BulletList(list))
             }
+            ListType::Ordered => {
+                for _ in nesting..sub_nesting - 1 {
+                    list = vec![vec![Block::OrderedList(DEFAULT_ORDERED_ATTR, list)]];
+                }
+                content.push(Block::OrderedList(DEFAULT_ORDERED_ATTR, list));
+            }
         }
     } else {
         parse_meta.tree.goto_parent();
@@ -76,6 +96,12 @@ fn parse_list(parse_meta: &mut Meta) -> (LinkedList<Vec<Block>>, ListType, usize
             match kind {
                 ListType::Unordered => {
                     list = LinkedList::from([vec![Block::BulletList(list.into_iter().collect())]])
+                }
+                ListType::Ordered => {
+                    list = LinkedList::from([vec![Block::OrderedList(
+                        DEFAULT_ORDERED_ATTR,
+                        list.into_iter().collect(),
+                    )]])
                 }
             }
         }
