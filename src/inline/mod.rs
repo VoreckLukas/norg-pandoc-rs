@@ -91,3 +91,26 @@ pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
 
     inlines
 }
+
+pub fn to_string(inlines: &[Inline]) -> String {
+    let mut output = String::new();
+
+    for inline in inlines {
+        match inline {
+            Inline::Code(_, s) | Inline::Str(s) => output.push_str(s),
+            Inline::Span(_, m)
+            | Inline::Link(_, m, _)
+            | Inline::Emph(m)
+            | Inline::Underline(m)
+            | Inline::Strong(m)
+            | Inline::Strikeout(m)
+            | Inline::Superscript(m)
+            | Inline::Subscript(m) => output.push_str(&to_string(m)),
+            Inline::Space => output.push(' '),
+            Inline::SoftBreak => output.push('\n'),
+            _ => unreachable!(),
+        }
+    }
+
+    output
+}
