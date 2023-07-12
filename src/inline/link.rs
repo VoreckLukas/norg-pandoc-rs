@@ -71,6 +71,22 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
             ((file, String::new()), description)
         }
 
+        "link_target_external_file" => {
+            if !parse_meta.tree.goto_next_sibling() {
+                unreachable!()
+            }
+
+            let file = parse_meta
+                .tree
+                .node()
+                .utf8_text(parse_meta.source)
+                .unwrap()
+                .replace("~", dirs::home_dir().unwrap().to_str().unwrap());
+            let description = vec![Inline::Str(file.clone())];
+
+            ((file, String::new()), description)
+        }
+
         "link_target_line_number" => {
             if !parse_meta.tree.goto_next_sibling() {
                 unreachable!()
