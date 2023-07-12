@@ -22,7 +22,13 @@ fn main() {
 
     #[cfg(debug_assertions)]
     {
-        debug_tree(&mut tree.walk(), 0);
+        debug_tree(
+            &mut Meta {
+                tree: tree.walk(),
+                source: unparsed.as_bytes(),
+            },
+            0,
+        );
     }
 
     println!(
@@ -36,15 +42,20 @@ fn main() {
 }
 
 #[cfg(debug_assertions)]
-fn debug_tree(tree: &mut TreeCursor, indentlevel: usize) {
+fn debug_tree(parse_meta: &mut Meta, indentlevel: usize) {
     let indent = " ".repeat(indentlevel * 3);
-    eprintln!("{}{}", indent, tree.node().kind());
-    if tree.goto_first_child() {
-        debug_tree(tree, indentlevel + 1);
+    eprintln!(
+        "{indent}{}",
+        // "{indent}{}: {}",
+        parse_meta.tree.node().kind(),
+        // parse_meta.tree.node().utf8_text(parse_meta.source).unwrap()
+    );
+    if parse_meta.tree.goto_first_child() {
+        debug_tree(parse_meta, indentlevel + 1);
     }
-    if tree.goto_next_sibling() {
-        debug_tree(tree, indentlevel);
+    if parse_meta.tree.goto_next_sibling() {
+        debug_tree(parse_meta, indentlevel);
     } else {
-        tree.goto_parent();
+        parse_meta.tree.goto_parent();
     }
 }

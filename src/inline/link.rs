@@ -110,10 +110,11 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
                     .unwrap();
                 &parse_meta.tree.node().kind()[nesting_index..]
             };
-            if !parse_meta.tree.goto_next_sibling() {
+            if !parse_meta.tree.goto_next_sibling() || !parse_meta.tree.goto_first_child() {
                 unreachable!()
             }
             let heading: Vec<_> = inline::parse(parse_meta).into_iter().collect();
+
             let heading_id = {
                 let mut heading_str = inline::to_string(&heading);
                 heading_str.push_str(nesting);
