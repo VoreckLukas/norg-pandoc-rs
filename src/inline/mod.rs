@@ -5,7 +5,7 @@ use pandoc_ast::Inline;
 use crate::Meta;
 
 mod attached;
-mod link;
+pub mod link;
 
 pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
     let mut inlines = match parse_meta.tree.node().kind() {

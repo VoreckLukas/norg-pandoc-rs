@@ -41,14 +41,12 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
         }
     };
 
-    let blocks = if parse_meta.tree.goto_next_sibling() {
+    if parse_meta.tree.goto_next_sibling() {
         let mut next_blocks = parse(parse_meta);
         next_blocks.push_front(block);
         next_blocks
     } else {
         parse_meta.tree.goto_parent();
         VecDeque::from([block])
-    };
-
-    blocks
+    }
 }
