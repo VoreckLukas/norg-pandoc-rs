@@ -22,7 +22,7 @@ jobs:
             readme: README.norg
   docs:
     runs-on: ubuntu-latest
-    permission: 
+    permissions: 
       contents: write
     needs:
       - scan_changes
