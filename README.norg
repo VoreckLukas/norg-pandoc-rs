@@ -4,6 +4,8 @@
   pandoc has no native support for rust it will output the AST in json representation which can then be 
   piped into pandoc. Example: `./norg-pandoc-tree-sitter README.norg | pandoc --from=json -o README.md`
 
+  Currently it supports Layer 1 and most of Layer 2
+
 ** Limitations
 
 *** Inherited from Tree Sitter
