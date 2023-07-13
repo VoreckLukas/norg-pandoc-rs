@@ -36,9 +36,7 @@ jobs:
             readme:
               - 'README.norg'
       - name: Generate pandoc ast
-        run: |
-          echo "AST=$(cargo run --release -- README.norg)" >> $GITHUB_OUTPUT
-        id: ast
+        run: cargo run --release -- README.norg >> t.json
       - name: Generate markdown file from ast
         uses: docker://pandoc/core:3
         with:
@@ -46,7 +44,9 @@ jobs:
             --from=json
             --to=gfm
             --output=README.md
-            ${{ steps.ast.outputs.AST }}
+            t.json
+      - name: Remove AST file
+        run: rm t.json
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
