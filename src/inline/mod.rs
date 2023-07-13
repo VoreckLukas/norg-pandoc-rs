@@ -39,6 +39,10 @@ pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
 
         "link" => LinkedList::from([link::parse(parse_meta)]),
 
+        "anchor_declaration" => LinkedList::from([link::parse_anchor_declaration(parse_meta)]),
+
+        "anchor_definition" => LinkedList::from([link::parse_anchor_definition(parse_meta)]),
+
         "escape_sequence" => {
             if parse_meta.tree.goto_first_child() && parse_meta.tree.goto_next_sibling() {
                 let char = parse_meta

@@ -140,42 +140,85 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
     }
 }
 
-pub(crate) fn resolve_magic_links(blocks: &mut [Block]) {
+pub(crate) fn resolve_links(blocks: &mut [Block]) {
     let mut targets = HashMap::new();
     let links = Rc::new(RefCell::new(Vec::new()));
+    let empty_anchors = Rc::new(RefCell::new(Vec::new()));
+    let mut anchor_definitions = HashMap::new();
 
-    link_resolver_blocks(blocks, &mut targets, links.clone());
+    link_resolver_blocks(
+        blocks,
+        &mut targets,
+        links.clone(),
+        empty_anchors.clone(),
+        &mut anchor_definitions,
+    );
 
+    // Resolve magic char links
     for link in Rc::try_unwrap(links).unwrap().into_inner() {
-        if let Some(target) = targets.get(&link.0[1..]) {
-            link.0 = format!("#{target}");
+        if let Some(target) = targets.get(&link.0 .0[1..]) {
+            link.0 .0 = format!("#{target}");
         }
-        link.1 = String::new();
+        link.0 .1 = link.0 .1.replace("Magic", "");
+        if link.0 .1 == "Anchor" {
+            anchor_definitions.insert(link.1, link.0);
+        }
+    }
+
+    // Resolve anchors
+    for anchor in Rc::try_unwrap(empty_anchors).unwrap().into_inner() {
+        if let Some(target) = anchor_definitions.get(&anchor.1) {
+            anchor.0 .0 = target.0.clone();
+        }
+        anchor.0 .1 = String::new();
+    }
+    for anchor in anchor_definitions.values_mut() {
+        anchor.1 = String::new();
     }
 }
 
 fn link_resolver_blocks<'a>(
     blocks: &'a mut [Block],
     targets: &mut HashMap<String, &'a str>,
-    links: Rc<RefCell<Vec<&'a mut (String, String)>>>,
+    links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    empty_anchors: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    anchor_definitions: &mut HashMap<String, &'a mut (String, String)>,
 ) {
     for block in blocks {
         match block {
-            Block::Para(inlines) | Block::Plain(inlines) => {
-                link_resolver_inlines(inlines, links.clone())
-            }
-            Block::Div(_, blocks) | Block::BlockQuote(blocks) => {
-                link_resolver_blocks(blocks, targets, links.clone())
-            }
+            Block::Para(inlines) | Block::Plain(inlines) => link_resolver_inlines(
+                inlines,
+                links.clone(),
+                empty_anchors.clone(),
+                anchor_definitions,
+            ),
+            Block::Div(_, blocks) | Block::BlockQuote(blocks) => link_resolver_blocks(
+                blocks,
+                targets,
+                links.clone(),
+                empty_anchors.clone(),
+                anchor_definitions,
+            ),
             Block::BulletList(list) | Block::OrderedList(_, list) => {
                 for item in list {
-                    link_resolver_blocks(item, targets, links.clone());
+                    link_resolver_blocks(
+                        item,
+                        targets,
+                        links.clone(),
+                        empty_anchors.clone(),
+                        anchor_definitions,
+                    );
                 }
             }
             Block::Header(_, (id, _, _), content) => {
                 let text = inline::to_string(content);
                 targets.insert(text, id);
-                link_resolver_inlines(content, links.clone());
+                link_resolver_inlines(
+                    content,
+                    links.clone(),
+                    empty_anchors.clone(),
+                    anchor_definitions,
+                );
             }
             _ => unreachable!(),
         }
@@ -184,7 +227,9 @@ fn link_resolver_blocks<'a>(
 
 fn link_resolver_inlines<'a>(
     inlines: &'a mut [Inline],
-    links: Rc<RefCell<Vec<&'a mut (String, String)>>>,
+    links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    empty_anchors: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    anchor_definitions: &mut HashMap<String, &'a mut (String, String)>,
 ) {
     for inline in inlines {
         match inline {
@@ -196,14 +241,69 @@ fn link_resolver_inlines<'a>(
             | Inline::Superscript(inlines)
             | Inline::Subscript(inlines)
             | Inline::Span(_, inlines)
-            | Inline::Emph(inlines) => link_resolver_inlines(inlines, links.clone()),
+            | Inline::Emph(inlines) => link_resolver_inlines(
+                inlines,
+                links.clone(),
+                empty_anchors.clone(),
+                anchor_definitions,
+            ),
             Inline::Link(_, description, target) => {
-                if target.1 == "Magic" {
-                    (*links).borrow_mut().push(target);
+                if target.1.contains("Magic") {
+                    (*links)
+                        .borrow_mut()
+                        .push((target, inline::to_string(description)));
+                } else if target.1 == "Anchor" {
+                    if target.0.is_empty() {
+                        (*empty_anchors)
+                            .borrow_mut()
+                            .push((target, inline::to_string(description)));
+                    } else {
+                        anchor_definitions.insert(inline::to_string(description), target);
+                    }
                 }
-                link_resolver_inlines(description, links.clone());
+                link_resolver_inlines(
+                    description,
+                    links.clone(),
+                    empty_anchors.clone(),
+                    anchor_definitions,
+                );
             }
             _ => unreachable!(),
         }
     }
+}
+
+pub(super) fn parse_anchor_declaration(parse_meta: &mut Meta) -> Inline {
+    if !parse_meta.tree.goto_first_child() || !parse_meta.tree.goto_first_child() {
+        unreachable!()
+    }
+
+    let description = inline::parse(parse_meta).into_iter().collect();
+
+    parse_meta.tree.goto_parent();
+
+    Inline::Link(
+        (String::default(), vec![], vec![]),
+        description,
+        (String::new(), String::from("Anchor")),
+    )
+}
+
+pub(super) fn parse_anchor_definition(parse_meta: &mut Meta) -> Inline {
+    if !parse_meta.tree.goto_first_child() || !parse_meta.tree.goto_first_child() {
+        unreachable!()
+    }
+
+    let description = inline::parse(parse_meta).into_iter().collect();
+
+    if !parse_meta.tree.goto_next_sibling() || !parse_meta.tree.goto_first_child() {
+        unreachable!()
+    }
+
+    let (mut target, _) = parse_target(parse_meta);
+    target.1.push_str("Anchor");
+
+    parse_meta.tree.goto_parent();
+
+    Inline::Link((String::default(), vec![], vec![]), description, target)
 }

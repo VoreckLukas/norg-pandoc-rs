@@ -9,7 +9,7 @@ pub fn parse(mut parse_meta: Meta) -> Pandoc {
         vec![]
     };
 
-    link::resolve_magic_links(&mut blocks);
+    link::resolve_links(&mut blocks);
 
     Pandoc {
         meta: Map::default(),

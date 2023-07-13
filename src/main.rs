@@ -45,10 +45,10 @@ fn main() {
 fn debug_tree(parse_meta: &mut Meta, indentlevel: usize) {
     let indent = " ".repeat(indentlevel * 3);
     eprintln!(
-        "{indent}{}",
-        // "{indent}{}: {}",
+        // "{indent}{}",
+        "{indent}{}: {}",
         parse_meta.tree.node().kind(),
-        // parse_meta.tree.node().utf8_text(parse_meta.source).unwrap()
+        parse_meta.tree.node().utf8_text(parse_meta.source).unwrap()
     );
     if parse_meta.tree.goto_first_child() {
         debug_tree(parse_meta, indentlevel + 1);
