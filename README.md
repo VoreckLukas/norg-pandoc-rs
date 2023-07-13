@@ -8,6 +8,9 @@ it will output the AST in json representation which can then be piped
 into pandoc. Example
 `./norg-pandoc-tree-sitter README.norg | pandoc --from=json -o README.md`
 
+Currently it supports Layer 1 and most of Layer 2, only verbatim ranged
+tags are missing
+
 <div>
 
 ## Limitations
@@ -23,7 +26,7 @@ I'll List them here as I encounter them.
 
 <div>
 
-#### Headings and Lists
+#### Headings, Lists and Quotes
 
 - The max nesting Headings and lists can have is 6. Anything beyond that
   will be treated like 6th level nesting
