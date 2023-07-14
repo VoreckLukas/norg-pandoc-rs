@@ -34,7 +34,15 @@
      - Scoping: Links of the form `{* Level 1 Heading: *** Level 3 Heading}` will simply link to 
        `* Level 1 Heading` As resolving the scope is over my head currently
 
-**** Metadata
+**** Ranged Verbatim Tags
+
+     - These need better documentation as to what kinds of tags exist and how to handle them. The ones 
+       implemented for now are:
+     -- Metadata `@document.meta`
+     -- Code blocks
+     -- Everything else is handled pretty much like a code block
+
+***** Metadata
 
      - The `@document.meta` tags will always just generate Metadata Strings, never lists as there is no syntax
        for those. This means that if for example you define a list of keywords, it will result in just a 

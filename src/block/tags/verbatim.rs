@@ -12,7 +12,7 @@ pub fn parse(parse_meta: &mut Meta) -> Block {
     } else if parse_meta.tree.node().utf8_text(parse_meta.source).unwrap() == "document.meta" {
         meta(parse_meta)
     } else {
-        todo!()
+        general(parse_meta)
     }
 }
 
@@ -108,4 +108,55 @@ pub fn meta(parse_meta: &mut Meta) -> Block {
     parse_meta.tree.goto_parent();
 
     Block::Null
+}
+
+pub fn general(parse_meta: &mut Meta) -> Block {
+    let mut classes = vec![parse_meta
+        .tree
+        .node()
+        .utf8_text(parse_meta.source)
+        .unwrap()
+        .to_owned()];
+
+    loop {
+        if !parse_meta.tree.goto_next_sibling() || parse_meta.tree.node().kind() != "_space" {
+            break;
+        }
+    }
+
+    if parse_meta.tree.node().kind() == "tag_parameters" {
+        if !parse_meta.tree.goto_first_child() {
+            unreachable!()
+        }
+
+        loop {
+            if parse_meta.tree.node().kind() == "tag_param" {
+                classes.push(
+                    parse_meta
+                        .tree
+                        .node()
+                        .utf8_text(parse_meta.source)
+                        .unwrap()
+                        .to_owned(),
+                );
+            }
+            if !parse_meta.tree.goto_next_sibling() {
+                break;
+            }
+        }
+
+        parse_meta.tree.goto_parent();
+    }
+
+    while parse_meta.tree.node().kind() != "ranged_verbatim_tag_content" {
+        if !parse_meta.tree.goto_next_sibling() {
+            unreachable!()
+        }
+    }
+
+    let content = parse_meta.tree.node().utf8_text(parse_meta.source).unwrap();
+
+    parse_meta.tree.goto_parent();
+
+    Block::CodeBlock((String::new(), classes, vec![]), content.to_string())
 }
