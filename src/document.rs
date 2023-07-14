@@ -1,13 +1,10 @@
-use pandoc_ast::{Block, Pandoc};
+use pandoc_ast::Pandoc;
 
 use crate::{block, inline::link, Meta};
 
 pub fn parse(mut parse_meta: Meta) -> Pandoc {
     let mut blocks = if parse_meta.tree.goto_first_child() {
-        block::parse(&mut parse_meta)
-            .into_iter()
-            .filter(|b| !matches!(b, Block::Null))
-            .collect()
+        block::parse(&mut parse_meta).into()
     } else {
         vec![]
     };
