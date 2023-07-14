@@ -58,6 +58,18 @@ pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
             }
         }
 
+        "inline_link_target" => {
+            let content = if parse_meta.tree.goto_first_child() {
+                parse(parse_meta).into_iter().collect()
+            } else {
+                vec![]
+            };
+
+            let id = format!("{} inl", to_string(&content));
+
+            LinkedList::from([Inline::Span((id, vec![], vec![]), content)])
+        }
+
         "_line_break" => LinkedList::from([Inline::SoftBreak]),
 
         "_word" => LinkedList::from([Inline::Str(

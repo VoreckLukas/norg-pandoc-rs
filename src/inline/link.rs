@@ -219,6 +219,7 @@ fn link_resolver_blocks<'a>(
         match block {
             Block::Para(inlines) | Block::Plain(inlines) => link_resolver_inlines(
                 inlines,
+                targets,
                 magic_links.clone(),
                 wiki_links.clone(),
                 empty_anchors.clone(),
@@ -251,6 +252,7 @@ fn link_resolver_blocks<'a>(
                 headings.insert(text.clone(), id);
                 link_resolver_inlines(
                     content,
+                    targets,
                     magic_links.clone(),
                     wiki_links.clone(),
                     empty_anchors.clone(),
@@ -265,6 +267,7 @@ fn link_resolver_blocks<'a>(
 
 fn link_resolver_inlines<'a>(
     inlines: &'a mut [Inline],
+    targets: &mut HashMap<String, &'a str>,
     magic_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
     wiki_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
     empty_anchors: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
@@ -279,9 +282,9 @@ fn link_resolver_inlines<'a>(
             | Inline::Strikeout(inlines)
             | Inline::Superscript(inlines)
             | Inline::Subscript(inlines)
-            | Inline::Span(_, inlines)
             | Inline::Emph(inlines) => link_resolver_inlines(
                 inlines,
+                targets,
                 magic_links.clone(),
                 wiki_links.clone(),
                 empty_anchors.clone(),
@@ -307,12 +310,27 @@ fn link_resolver_inlines<'a>(
                 }
                 link_resolver_inlines(
                     description,
+                    targets,
                     magic_links.clone(),
                     wiki_links.clone(),
                     empty_anchors.clone(),
                     anchor_definitions,
                 );
             }
+            Inline::Span((id, _, _), content) => {
+                if !id.is_empty() {
+                    targets.insert(inline::to_string(content), id);
+                }
+                link_resolver_inlines(
+                    content,
+                    targets,
+                    magic_links.clone(),
+                    wiki_links.clone(),
+                    empty_anchors.clone(),
+                    anchor_definitions,
+                )
+            }
+
             _ => unreachable!(),
         }
     }
