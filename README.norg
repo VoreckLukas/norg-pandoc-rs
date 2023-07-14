@@ -36,6 +36,8 @@
        other file
      - File links of the syntax `{file://path/to/file.norg}` seem to work as apparantly URIs of that schema
        need absolute paths. However even with absolute paths im running into issues
+     - Wiki Links currently only work in the same file. As this parser is only processing one file at a 
+       time it can't open other files to search for the target.
      - Scoping: Links of the form `{* Level 1 Heading: *** Level 3 Heading}` will simply link to 
        `* Level 1 Heading` As resolving the scope is over my head currently
 

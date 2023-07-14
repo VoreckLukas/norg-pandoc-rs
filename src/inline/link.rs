@@ -136,30 +136,59 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
             ((format!("#{target}"), String::from("Magic")), description)
         }
 
+        "link_target_wiki" => {
+            if !parse_meta.tree.goto_next_sibling() || !parse_meta.tree.goto_first_child() {
+                unreachable!()
+            }
+
+            let description: Vec<_> = inline::parse(parse_meta).into_iter().collect();
+
+            let target = inline::to_string(&description);
+
+            ((format!("#{target}"), String::from("Wiki")), description)
+        }
+
         _ => todo!(),
     }
 }
 
 pub(crate) fn resolve_links(blocks: &mut [Block]) {
     let mut targets = HashMap::new();
-    let links = Rc::new(RefCell::new(Vec::new()));
+    let magic_links = Rc::new(RefCell::new(Vec::new()));
+    let mut headings = HashMap::new();
+    let wiki_links = Rc::new(RefCell::new(Vec::new()));
     let empty_anchors = Rc::new(RefCell::new(Vec::new()));
     let mut anchor_definitions = HashMap::new();
 
     link_resolver_blocks(
         blocks,
         &mut targets,
-        links.clone(),
+        magic_links.clone(),
+        &mut headings,
+        wiki_links.clone(),
         empty_anchors.clone(),
         &mut anchor_definitions,
     );
 
     // Resolve magic char links
-    for link in Rc::try_unwrap(links).unwrap().into_inner() {
+    for link in Rc::try_unwrap(magic_links).unwrap().into_inner() {
         if let Some(target) = targets.get(&link.0 .0[1..]) {
+            link.0 .0 = format!("#{target}");
+        } else if let Some(target) = headings.get(&link.0 .0[1..]) {
             link.0 .0 = format!("#{target}");
         }
         link.0 .1 = link.0 .1.replace("Magic", "");
+        if link.0 .1 == "Anchor" {
+            anchor_definitions.insert(link.1, link.0);
+        }
+    }
+
+    // Resolve wiki links
+    for link in Rc::try_unwrap(wiki_links).unwrap().into_inner() {
+        if let Some(target) = headings.get(&link.0 .0[1..]) {
+            link.0 .0 = format!("#{target}");
+        }
+        link.0 .1 = link.0 .1.replace("Wiki", "");
         if link.0 .1 == "Anchor" {
             anchor_definitions.insert(link.1, link.0);
         }
@@ -180,7 +209,9 @@ pub(crate) fn resolve_links(blocks: &mut [Block]) {
 fn link_resolver_blocks<'a>(
     blocks: &'a mut [Block],
     targets: &mut HashMap<String, &'a str>,
-    links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    magic_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    headings: &mut HashMap<String, &'a str>,
+    wiki_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
     empty_anchors: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
     anchor_definitions: &mut HashMap<String, &'a mut (String, String)>,
 ) {
@@ -188,14 +219,17 @@ fn link_resolver_blocks<'a>(
         match block {
             Block::Para(inlines) | Block::Plain(inlines) => link_resolver_inlines(
                 inlines,
-                links.clone(),
+                magic_links.clone(),
+                wiki_links.clone(),
                 empty_anchors.clone(),
                 anchor_definitions,
             ),
             Block::Div(_, blocks) | Block::BlockQuote(blocks) => link_resolver_blocks(
                 blocks,
                 targets,
-                links.clone(),
+                magic_links.clone(),
+                headings,
+                wiki_links.clone(),
                 empty_anchors.clone(),
                 anchor_definitions,
             ),
@@ -204,7 +238,9 @@ fn link_resolver_blocks<'a>(
                     link_resolver_blocks(
                         item,
                         targets,
-                        links.clone(),
+                        magic_links.clone(),
+                        headings,
+                        wiki_links.clone(),
                         empty_anchors.clone(),
                         anchor_definitions,
                     );
@@ -212,10 +248,11 @@ fn link_resolver_blocks<'a>(
             }
             Block::Header(_, (id, _, _), content) => {
                 let text = inline::to_string(content);
-                targets.insert(text, id);
+                headings.insert(text.clone(), id);
                 link_resolver_inlines(
                     content,
-                    links.clone(),
+                    magic_links.clone(),
+                    wiki_links.clone(),
                     empty_anchors.clone(),
                     anchor_definitions,
                 );
@@ -228,7 +265,8 @@ fn link_resolver_blocks<'a>(
 
 fn link_resolver_inlines<'a>(
     inlines: &'a mut [Inline],
-    links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    magic_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    wiki_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
     empty_anchors: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
     anchor_definitions: &mut HashMap<String, &'a mut (String, String)>,
 ) {
@@ -244,13 +282,18 @@ fn link_resolver_inlines<'a>(
             | Inline::Span(_, inlines)
             | Inline::Emph(inlines) => link_resolver_inlines(
                 inlines,
-                links.clone(),
+                magic_links.clone(),
+                wiki_links.clone(),
                 empty_anchors.clone(),
                 anchor_definitions,
             ),
             Inline::Link(_, description, target) => {
                 if target.1.contains("Magic") {
-                    (*links)
+                    (*magic_links)
+                        .borrow_mut()
+                        .push((target, inline::to_string(description)));
+                } else if target.1.contains("Wiki") {
+                    (*wiki_links)
                         .borrow_mut()
                         .push((target, inline::to_string(description)));
                 } else if target.1 == "Anchor" {
@@ -264,7 +307,8 @@ fn link_resolver_inlines<'a>(
                 }
                 link_resolver_inlines(
                     description,
-                    links.clone(),
+                    magic_links.clone(),
+                    wiki_links.clone(),
                     empty_anchors.clone(),
                     anchor_definitions,
                 );
