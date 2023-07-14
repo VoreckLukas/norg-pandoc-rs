@@ -63,13 +63,28 @@ have not found a way to resolve yet
 
 <div>
 
-#### Metadata
+#### Ranged Verbatim Tags
+
+- These need better documentation as to what kinds of tags exist and how
+  to handle them. The ones implemented for now are:
+
+  - Metadata `@document.meta`
+
+  - Code blocks
+
+  - Everything else is handled pretty much like a code block
+
+<div>
+
+##### Metadata
 
 - The `@document.meta` tags will always just generate Metadata Strings,
   never lists as there is no syntax for those. This means that if for
   example you define a list of keywords, it will result in just a String
   with your raw list. The spec definitely needs to document these
   better.
+
+</div>
 
 </div>
 
