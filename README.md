@@ -61,6 +61,18 @@ have not found a way to resolve yet
 
 </div>
 
+<div>
+
+#### Metadata
+
+- The `@document.meta` tags will always just generate Metadata Strings,
+  never lists as there is no syntax for those. This means that if for
+  example you define a list of keywords, it will result in just a String
+  with your raw list. The spec definitely needs to document these
+  better.
+
+</div>
+
 </div>
 
 </div>
