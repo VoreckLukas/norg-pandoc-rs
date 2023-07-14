@@ -8,6 +8,7 @@ mod heading;
 mod list;
 mod paragraph;
 mod quote;
+mod tags;
 
 pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
     let block = match parse_meta.tree.node().kind() {
@@ -18,6 +19,8 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
         "quote" => quote::parse(parse_meta),
 
         s if s.starts_with("heading") => heading::parse(parse_meta),
+
+        "ranged_verbatim_tag" => tags::verbatim::parse(parse_meta),
 
         "_line_break" | "_paragraph_break" => {
             return if parse_meta.tree.goto_next_sibling() {
