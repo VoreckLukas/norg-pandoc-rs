@@ -33,6 +33,16 @@ I'll List them here as I encounter them.
 
 </div>
 
+<div>
+
+#### Delimiting Modifiers
+
+- The spec says that the delimiting modifiers consist of two or more
+  consecutive corresponding chars. However tree sitter only recognizes
+  them if the char is repeated three or more times.
+
+</div>
+
 </div>
 
 <div>
