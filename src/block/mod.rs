@@ -22,9 +22,10 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
 
         "ranged_verbatim_tag" => tags::verbatim::parse(parse_meta),
 
-        "weak_paragraph_delimiter" => Block::Null,
-
-        "_line_break" | "_paragraph_break" => {
+        "strong_paragraph_delimiter"
+        | "weak_paragraph_delimiter"
+        | "_line_break"
+        | "_paragraph_break" => {
             return if parse_meta.tree.goto_next_sibling() {
                 parse(parse_meta)
             } else {
@@ -52,10 +53,6 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
         next_blocks
     } else {
         parse_meta.tree.goto_parent();
-        if matches!(block, Block::Null) {
-            VecDeque::default()
-        } else {
-            VecDeque::from([block])
-        }
+        VecDeque::from([block])
     }
 }

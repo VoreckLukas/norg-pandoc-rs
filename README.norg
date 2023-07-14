@@ -19,6 +19,11 @@
      - The max nesting Headings and lists can have is 6. Anything beyond that will be treated like 6th level
        nesting
 
+**** Delimiting Modifiers
+
+     - The spec says that the delimiting modifiers consist of two or more consecutive corresponding chars.
+       However tree sitter only recognizes them if the char is repeated three or more times.
+
 *** Inherent to this parser
 
     The following are limitations that aren't inherited by tree sitter and i have not found a 
@@ -47,3 +52,4 @@
      - The `@document.meta` tags will always just generate Metadata Strings, never lists as there is no syntax
        for those. This means that if for example you define a list of keywords, it will result in just a 
        String with your raw list. The spec definitely needs to document these better.
+
