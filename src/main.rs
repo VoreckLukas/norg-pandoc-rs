@@ -1,5 +1,6 @@
 use std::{env, fs};
 
+use pandoc_ast::{Map, MetaValue};
 use tree_sitter::{Parser, TreeCursor};
 
 mod block;
@@ -9,6 +10,7 @@ mod inline;
 pub struct Meta<'a> {
     tree: TreeCursor<'a>,
     source: &'a [u8],
+    metadata: Map<String, MetaValue>,
 }
 
 fn main() {
@@ -26,6 +28,7 @@ fn main() {
             &mut Meta {
                 tree: tree.walk(),
                 source: unparsed.as_bytes(),
+                metadata: Map::default(),
             },
             0,
         );
@@ -35,7 +38,8 @@ fn main() {
         "{}",
         document::parse(Meta {
             tree: tree.walk(),
-            source: unparsed.as_bytes()
+            source: unparsed.as_bytes(),
+            metadata: Map::default()
         })
         .to_json()
     )
@@ -45,10 +49,10 @@ fn main() {
 fn debug_tree(parse_meta: &mut Meta, indentlevel: usize) {
     let indent = " ".repeat(indentlevel * 3);
     eprintln!(
-        // "{indent}{}",
-        "{indent}{}: {}",
+        "{indent}{}",
+        //"{indent}{}: {}",
         parse_meta.tree.node().kind(),
-        parse_meta.tree.node().utf8_text(parse_meta.source).unwrap()
+        //parse_meta.tree.node().utf8_text(parse_meta.source).unwrap()
     );
     if parse_meta.tree.goto_first_child() {
         debug_tree(parse_meta, indentlevel + 1);
