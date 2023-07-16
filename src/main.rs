@@ -93,7 +93,6 @@ fn main() {
         let pandoc_args = Arc::new(args.pandoc);
         for entry in directory_walker {
             let entry = entry.unwrap().path().to_path_buf();
-            println!("{entry:?}");
             if entry.is_file()
                 && entry
                     .extension()
