@@ -34,6 +34,8 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
             }
         }
 
+        "horizontal_line" => Block::HorizontalRule,
+
         _ => {
             eprintln!("{} not implemented", parse_meta.tree.node().kind());
             Block::Plain(vec![Inline::Str(

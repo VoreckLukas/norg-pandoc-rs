@@ -259,7 +259,7 @@ fn link_resolver_blocks<'a>(
                     anchor_definitions,
                 );
             }
-            Block::CodeBlock(_, _) => { /* Ignore */ }
+            Block::HorizontalRule | Block::CodeBlock(_, _) => { /* Ignore */ }
             _ => unreachable!(),
         }
     }
