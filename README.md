@@ -12,6 +12,10 @@ Currently it supports Layer 2 as well as selected other things:
 
 - Inline link targets
 
+- Wiki Links
+
+- `.image`
+
 <div>
 
 ## Limitations
