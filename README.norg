@@ -4,7 +4,8 @@
   Multiple files will be parsed in a multithreaded fashion.
 
   This README is about the binary you can actually use. If you're interested in current limitations 
-  or want to use the library yourself, please look at {:lib/README:}[the libraries README]
+  or want to use the library yourself, please look at {:lib/README:}[the libraries README] 
+  (TODO: This is probably the more interesting README)
 
 ** Dependencies
 

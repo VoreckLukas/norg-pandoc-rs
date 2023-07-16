@@ -19,15 +19,14 @@ jobs:
         id: filter
         with:
           filters: |
-            bin: README.norg
-            lib: lib/README.norg
+            readme: README.norg
   docs:
     runs-on: ubuntu-latest
     permissions: 
       contents: write
     needs:
       - scan_changes
-    if: ${{ needs.scan_changes.outputs.bin == 'true' || needs.scan_changes.outputs.lib == 'true' }}
+    if: ${{ needs.scan_changes.outputs.readme == 'true' }}
     steps:
       - uses: actions/checkout@v3
       - name: Generate documentation
