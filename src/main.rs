@@ -6,21 +6,17 @@ use std::{
     sync::Arc,
 };
 
-use clap::Parser;
+use clap::{arg, command, Args, Parser};
 use walkdir::WalkDir;
 
 /// This is a cli tool to convert a norg tool to any pandoc supported file format.
 ///
 /// It uses pandoc under the hood
 #[derive(Parser)]
-struct Args {
+struct Arguments {
     /// The file format to convert to
     #[arg(short, long)]
     to: String,
-
-    /// Arguments to pass on to Pandoc
-    #[arg(short, long)]
-    pandoc: Option<String>,
 
     /// The output file/directory name
     ///
@@ -39,43 +35,48 @@ struct Args {
 }
 
 fn main() {
-    let args = Args::parse();
+    let cli = command!();
+    let cli = Arguments::augment_args(cli)
+        .arg(arg!([PANDOC_ARGS] ... "arguments to pass on to pandonc").last(true));
+    let matches = cli.get_matches();
 
-    if !args.input.exists() {
+    let input = matches.get_one::<PathBuf>("input").unwrap().to_owned();
+    let output = matches.get_one::<PathBuf>("output").map(|v| v.to_owned());
+    let to = matches.get_one::<String>("to").unwrap().to_owned();
+    let pandoc_args: Option<String> = matches
+        .get_many::<String>("PANDOC_ARGS")
+        .map(|v| v.map(|v| v.to_owned()).collect::<Vec<String>>().join(" "));
+    let jobs = matches.get_one::<usize>("jobs").map(|v| v.to_owned());
+
+    if !input.exists() {
         eprintln!("Input path not found");
         exit(1);
     }
 
     let api_version = get_api_version();
 
-    if args.input.is_file() {
-        let output = match args.output {
+    if input.is_file() {
+        let output = match output {
             Some(mut output) => {
                 if output.is_file() {
                     output
                 } else {
                     let mut filename = PathBuf::new();
-                    filename.push(args.input.file_name().unwrap());
-                    filename.set_extension(&args.to);
+                    filename.push(input.file_name().unwrap());
+                    filename.set_extension(&to);
                     output.push(filename);
                     output
                 }
             }
             None => {
-                let mut output = args.input.clone();
-                output.set_extension(&args.to);
+                let mut output = input.clone();
+                output.set_extension(&to);
                 output
             }
         };
-        parse_file(
-            args.input,
-            &args.to,
-            args.pandoc.as_deref(),
-            output,
-            api_version,
-        );
+        parse_file(input, &to, pandoc_args.as_deref(), output, api_version);
     } else {
-        let output = if let Some(output) = args.output {
+        let output = if let Some(output) = output {
             if output.is_file() {
                 eprintln!("When the input is a directory, the output can't be a file");
                 exit(2);
@@ -83,10 +84,10 @@ fn main() {
 
             output
         } else {
-            args.input.clone()
+            input.clone()
         };
-        let directory_walker = WalkDir::new(&args.input).into_iter();
-        let thread_pool = if let Some(jobs) = args.jobs {
+        let directory_walker = WalkDir::new(&input).into_iter();
+        let thread_pool = if let Some(jobs) = jobs {
             rusty_pool::Builder::new()
                 .name("norg_pandoc".to_string())
                 .core_size(jobs / 2)
@@ -97,8 +98,8 @@ fn main() {
                 .name("norg_pandoc".to_string())
                 .build()
         };
-        let to = Arc::new(args.to);
-        let pandoc_args = Arc::new(args.pandoc);
+        let to = Arc::new(to);
+        let pandoc_args = Arc::new(pandoc_args);
         for entry in directory_walker {
             let entry = entry.unwrap().path().to_path_buf();
             if entry.is_file()
@@ -107,7 +108,7 @@ fn main() {
                     .map_or(false, |e| e.to_str().map_or(false, |e| e == "norg"))
             {
                 let mut output = output.clone();
-                output.push(entry.strip_prefix(&args.input).unwrap());
+                output.push(entry.strip_prefix(&input).unwrap());
                 output.set_extension(&*to);
                 let to = to.clone();
                 let pandoc_args = pandoc_args.clone();

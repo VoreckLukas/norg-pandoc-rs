@@ -19,8 +19,8 @@
       it will parse any norg file it can find
    -- `-t`/`--to` The file format to convert to
    - Optional
-   -- `-p`/`--pandoc` The string following this flag will be directly passed to pandoc as an argument
    -- `-o`/`--output` Directory/File to save the parsed result to. If the input is a directory but this flag
       is given a file it will error out
    -- `-j`/`--jobs` The number of threads to use to parse the directory. The default is double the number of
       available CPUs
+   -- All arguments that come after `--` followed by a space will be passed on to pandoc
