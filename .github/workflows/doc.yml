@@ -19,34 +19,19 @@ jobs:
         id: filter
         with:
           filters: |
-            readme: README.norg
+            bin: README.norg
+            lib: lib/README.norg
   docs:
     runs-on: ubuntu-latest
     permissions: 
       contents: write
     needs:
       - scan_changes
-    if: ${{ needs.scan_changes.outputs.readme == 'true' }}
+    if: ${{ needs.scan_changes.outputs.bin == 'true' || needs.scan_changes.outputs.lib == 'true' }}
     steps:
       - uses: actions/checkout@v3
-      - uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            readme:
-              - 'README.norg'
-      - name: Generate pandoc ast
-        run: cargo run --release -- README.norg >> t.json
-      - name: Generate markdown file from ast
-        uses: docker://pandoc/core:3
-        with:
-          args: >-
-            --from=json
-            --to=gfm
-            --output=README.md
-            t.json
-      - name: Remove AST file
-        run: rm t.json
+      - name: Generate documentation
+        run: cargo run -- -t md ./
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
