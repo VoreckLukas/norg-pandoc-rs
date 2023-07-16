@@ -103,6 +103,7 @@ pub fn meta(parse_meta: &mut Meta) -> Block {
             }
         }
         parse_meta.tree.goto_parent();
+        parse_meta.tree.goto_parent();
     }
 
     parse_meta.tree.goto_parent();

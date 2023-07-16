@@ -22,7 +22,7 @@ pub fn parse<P: AsRef<Path>>(file: P, target_format: &str, api_version: Vec<u32>
     let unparsed = fs::read_to_string(file).expect("Cannot read file");
     let tree = parser.parse(&unparsed, None).unwrap();
 
-    #[cfg(debug)]
+    #[cfg(feature = "debug")]
     {
         debug_tree(
             &mut Meta {
@@ -46,7 +46,7 @@ pub fn parse<P: AsRef<Path>>(file: P, target_format: &str, api_version: Vec<u32>
     )
 }
 
-#[cfg(debug)]
+#[cfg(feature = "debug")]
 fn debug_tree(parse_meta: &mut Meta, indentlevel: usize) {
     let indent = " ".repeat(indentlevel * 3);
     eprintln!(

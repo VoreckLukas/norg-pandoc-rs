@@ -260,7 +260,7 @@ fn link_resolver_blocks<'a>(
                 );
             }
             Block::HorizontalRule | Block::CodeBlock(_, _) => { /* Ignore */ }
-            _ => unreachable!(),
+            _ => unreachable!("{:?}", block),
         }
     }
 }

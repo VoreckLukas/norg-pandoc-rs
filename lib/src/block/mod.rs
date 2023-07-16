@@ -53,10 +53,16 @@ pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
 
     if parse_meta.tree.goto_next_sibling() {
         let mut next_blocks = parse(parse_meta);
-        next_blocks.push_front(block);
+        if !matches!(block, Block::Null) {
+            next_blocks.push_front(block);
+        }
         next_blocks
     } else {
         parse_meta.tree.goto_parent();
-        VecDeque::from([block])
+        if !matches!(block, Block::Null) {
+            VecDeque::from([block])
+        } else {
+            VecDeque::default()
+        }
     }
 }
