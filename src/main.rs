@@ -124,7 +124,7 @@ fn parse_file(file: PathBuf, to: &str, pandoc_args: Option<&str>, output_file: P
         }
     }
 
-    let ast = norg_pandoc_ast::parse(file);
+    let ast = norg_pandoc_ast::parse(file, to);
 
     let mut pandoc_command = Command::new("pandoc");
 
