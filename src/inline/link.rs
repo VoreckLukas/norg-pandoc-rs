@@ -277,7 +277,8 @@ fn link_resolver_inlines<'a>(
         match inline {
             Inline::Space | Inline::SoftBreak | Inline::Code(_, _) | Inline::Str(_) => { /* ignore */
             }
-            Inline::Underline(inlines)
+            Inline::Image(_, inlines, _)
+            | Inline::Underline(inlines)
             | Inline::Strong(inlines)
             | Inline::Strikeout(inlines)
             | Inline::Superscript(inlines)
