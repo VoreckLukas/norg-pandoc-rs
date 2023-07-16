@@ -1,7 +1,7 @@
 use std::{
     fs,
     io::Write,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{exit, Command, Stdio},
     sync::Arc,
 };
@@ -74,7 +74,14 @@ fn main() {
                 output
             }
         };
-        parse_file(input, &to, pandoc_args.as_deref(), output, api_version);
+        parse_file(
+            &input,
+            &to,
+            pandoc_args.as_deref(),
+            &output,
+            api_version,
+            output.parent().unwrap(),
+        );
     } else {
         let output = if let Some(output) = output {
             if output.is_file() {
@@ -86,6 +93,7 @@ fn main() {
         } else {
             input.clone()
         };
+        let workspace_root = Arc::new(output.clone());
         let directory_walker = WalkDir::new(&input).into_iter();
         let thread_pool = if let Some(jobs) = jobs {
             rusty_pool::Builder::new()
@@ -113,8 +121,16 @@ fn main() {
                 let to = to.clone();
                 let pandoc_args = pandoc_args.clone();
                 let api_version = api_version.clone();
+                let workspace_root = workspace_root.clone();
                 thread_pool.execute(move || {
-                    parse_file(entry, &*to, pandoc_args.as_deref(), output, api_version);
+                    parse_file(
+                        &entry,
+                        &*to,
+                        pandoc_args.as_deref(),
+                        &output,
+                        api_version,
+                        &*workspace_root,
+                    );
                 });
             }
         }
@@ -123,11 +139,12 @@ fn main() {
 }
 
 fn parse_file(
-    file: PathBuf,
+    file: &Path,
     to: &str,
     pandoc_args: Option<&str>,
-    output_file: PathBuf,
+    output_file: &Path,
     api_version: Vec<u32>,
+    workspace_root: &Path,
 ) {
     if !output_file.parent().unwrap().exists() {
         if let Err(e) = fs::create_dir_all(output_file.parent().unwrap()) {
@@ -139,7 +156,7 @@ fn parse_file(
         }
     }
 
-    let ast = norg_pandoc_ast::parse(file, to, api_version);
+    let ast = norg_pandoc_ast::parse(file, to, api_version, workspace_root);
 
     let mut pandoc_command = Command::new("pandoc");
 

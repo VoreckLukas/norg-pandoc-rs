@@ -52,6 +52,13 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
                 .utf8_text(parse_meta.source)
                 .unwrap()
                 .to_owned();
+            if file.starts_with('$') {
+                file = format!(
+                    "{}{}",
+                    parse_meta.workspace_root.as_os_str().to_str().unwrap(),
+                    &file[1..]
+                );
+            }
             let mut description = vec![Inline::Str(file.clone())];
             file.push_str(&format!(".{}", parse_meta.target_format));
 
