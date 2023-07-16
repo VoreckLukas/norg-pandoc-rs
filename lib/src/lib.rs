@@ -14,7 +14,7 @@ pub struct Meta<'a> {
     target_format: &'a str,
 }
 
-pub fn parse<P: AsRef<Path>>(file: P, target_format: &str) -> Pandoc {
+pub fn parse<P: AsRef<Path>>(file: P, target_format: &str, api_version: Vec<u32>) -> Pandoc {
     let language = tree_sitter_norg::language();
     let mut parser = Parser::new();
     parser.set_language(language).unwrap();
@@ -35,12 +35,15 @@ pub fn parse<P: AsRef<Path>>(file: P, target_format: &str) -> Pandoc {
         );
     }
 
-    document::parse(Meta {
-        tree: tree.walk(),
-        source: unparsed.as_bytes(),
-        metadata: Map::default(),
-        target_format,
-    })
+    document::parse(
+        Meta {
+            tree: tree.walk(),
+            source: unparsed.as_bytes(),
+            metadata: Map::default(),
+            target_format,
+        },
+        api_version,
+    )
 }
 
 #[cfg(debug)]

@@ -46,6 +46,8 @@ fn main() {
         exit(1);
     }
 
+    let api_version = get_api_version();
+
     if args.input.is_file() {
         let output = match args.output {
             Some(mut output) => {
@@ -65,7 +67,13 @@ fn main() {
                 output
             }
         };
-        parse_file(args.input, &args.to, args.pandoc.as_deref(), output);
+        parse_file(
+            args.input,
+            &args.to,
+            args.pandoc.as_deref(),
+            output,
+            api_version,
+        );
     } else {
         let output = if let Some(output) = args.output {
             if output.is_file() {
@@ -103,8 +111,9 @@ fn main() {
                 output.set_extension(&*to);
                 let to = to.clone();
                 let pandoc_args = pandoc_args.clone();
+                let api_version = api_version.clone();
                 thread_pool.execute(move || {
-                    parse_file(entry, &*to, pandoc_args.as_deref(), output);
+                    parse_file(entry, &*to, pandoc_args.as_deref(), output, api_version);
                 });
             }
         }
@@ -112,7 +121,13 @@ fn main() {
     }
 }
 
-fn parse_file(file: PathBuf, to: &str, pandoc_args: Option<&str>, output_file: PathBuf) {
+fn parse_file(
+    file: PathBuf,
+    to: &str,
+    pandoc_args: Option<&str>,
+    output_file: PathBuf,
+    api_version: Vec<u32>,
+) {
     if !output_file.parent().unwrap().exists() {
         if let Err(e) = fs::create_dir_all(output_file.parent().unwrap()) {
             eprintln!(
@@ -123,7 +138,7 @@ fn parse_file(file: PathBuf, to: &str, pandoc_args: Option<&str>, output_file: P
         }
     }
 
-    let ast = norg_pandoc_ast::parse(file, to);
+    let ast = norg_pandoc_ast::parse(file, to, api_version);
 
     let mut pandoc_command = Command::new("pandoc");
 
@@ -135,6 +150,7 @@ fn parse_file(file: PathBuf, to: &str, pandoc_args: Option<&str>, output_file: P
         .arg("-o")
         .arg(output_file)
         .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
         .spawn()
         .expect("Couldn't spawn pandoc");
     let mut stdin = pandoc_command.stdin.take().unwrap();
@@ -143,5 +159,40 @@ fn parse_file(file: PathBuf, to: &str, pandoc_args: Option<&str>, output_file: P
         .expect("Couldnt write to pandocs stdin");
     stdin.flush().unwrap();
     drop(stdin);
-    let _ = pandoc_command.wait();
+    match pandoc_command.wait_with_output() {
+        Ok(output) => {
+            print!(
+                "{}{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            )
+        }
+        Err(error) => eprintln!("Couldn't run pandoc: {error}"),
+    }
+}
+
+fn get_api_version() -> Vec<u32> {
+    let mut pandoc_command = Command::new("pandoc")
+        .arg("--from=gfm")
+        .arg("--to=json")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Couldn't spawn pandoc");
+    let mut stdin = pandoc_command.stdin.take().unwrap();
+    stdin
+        .write_all("t".as_bytes())
+        .expect("Couldnt write to pandocs stdin");
+    stdin.flush().unwrap();
+    drop(stdin);
+    match pandoc_command.wait_with_output() {
+        Ok(output) => {
+            pandoc_ast::Pandoc::from_json(&String::from_utf8_lossy(&output.stdout))
+                .pandoc_api_version
+        }
+        Err(error) => {
+            eprintln!("Couldn't run pandoc: {error}");
+            exit(-1);
+        }
+    }
 }

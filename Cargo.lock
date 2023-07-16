@@ -361,6 +361,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "norg_pandoc_ast",
+ "pandoc_ast",
  "rusty_pool",
  "walkdir",
 ]

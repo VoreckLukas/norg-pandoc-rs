@@ -9,5 +9,6 @@ members = ["lib"]
 [dependencies]
 clap = { version = "4.3.12", features = ["derive"] }
 rusty_pool = "0.7.0"
+pandoc_ast = "0.8.4"
 walkdir = "2.3.3"
 norg_pandoc_ast = { path = "lib" }
