@@ -132,7 +132,6 @@ fn parse_file(file: PathBuf, to: &str, pandoc_args: Option<&str>, output_file: P
     }
     let mut pandoc_command = pandoc_command
         .arg("--from=json")
-        .arg(&format!("--to={to}"))
         .arg("-o")
         .arg(output_file)
         .stdin(Stdio::piped())
