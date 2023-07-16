@@ -1,15 +1,13 @@
 [package]
-name = "norg-pandoc-tree-sitter"
+name = "norg_pandoc_rs"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["lib"]
 
 [dependencies]
-dirs = "5.0.1"
-pandoc_ast = "0.8.4"
-tree-sitter = "0.20.10"
-tree-sitter-norg = { git = "https://github.com/nvim-neorg/tree-sitter-norg.git" }
-
-[build-dependencies]
-cc = "1.0.79"
+clap = { version = "4.3.12", features = ["derive"] }
+rusty_pool = "0.7.0"
+walkdir = "2.3.3"
+norg_pandoc_ast = { path = "lib" }

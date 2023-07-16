@@ -53,7 +53,7 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
                 .unwrap()
                 .to_owned();
             let mut description = vec![Inline::Str(file.clone())];
-            file.push_str(".norg");
+            file.push_str(&format!(".{}", parse_meta.target_format));
 
             loop {
                 if !parse_meta.tree.goto_next_sibling() || parse_meta.tree.node().kind() != "_end" {
