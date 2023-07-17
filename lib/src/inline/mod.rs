@@ -5,6 +5,7 @@ use pandoc_ast::Inline;
 use crate::Meta;
 
 mod attached;
+pub mod detached_extension;
 pub mod link;
 
 pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {

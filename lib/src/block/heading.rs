@@ -1,3 +1,5 @@
+use std::collections::LinkedList;
+
 use pandoc_ast::Block;
 
 use crate::{block, inline, Meta};
@@ -16,17 +18,29 @@ pub fn parse(parse_meta: &mut Meta) -> Block {
             .unwrap()
     };
 
-    let text: Vec<_> = if parse_meta.tree.goto_first_child()
-        && parse_meta.tree.goto_next_sibling()
-        && parse_meta.tree.goto_first_child()
-    {
-        inline::parse(parse_meta).into_iter().collect()
+    if !parse_meta.tree.goto_first_child() || !parse_meta.tree.goto_next_sibling() {
+        unreachable!()
+    }
+
+    let (mut text, extension_length) =
+        if parse_meta.tree.node().kind() == "detached_modifier_extension" {
+            let item = inline::detached_extension::parse(parse_meta);
+            parse_meta.tree.goto_next_sibling();
+            let len = item.len();
+            (item, len)
+        } else {
+            (LinkedList::new(), 0)
+        };
+
+    let text: Vec<_> = if parse_meta.tree.goto_first_child() {
+        text.append(&mut inline::parse(parse_meta));
+        text.into_iter().collect()
     } else {
         unreachable!()
     };
 
     let id = {
-        let mut id = inline::to_string(&text);
+        let mut id = inline::to_string(&text[extension_length..]);
         id.push_str(&nesting.to_string());
         id
     };
