@@ -14,6 +14,8 @@ version: 2.0.0
   - Inline link targets
   - Wiki Links
   - `.image`
+  - Todo items:
+  -- Urgent (`(!)`)
 
 ** Limitations
 
