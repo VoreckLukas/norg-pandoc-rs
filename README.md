@@ -12,6 +12,17 @@ it](lib/README.md#Limitations2)
 
 <div>
 
+## Feature Requests
+
+This tool obviously doesn't support everything yet. And because I'm the
+only one I know of that uses it, I'm mostly adding features I need
+myself. If you use it and want to see a specific feature implemented
+leave an issue or pull request.
+
+</div>
+
+<div>
+
 ## Dependencies
 
 As this tool uses pandoc, you obviously have to have that installed
