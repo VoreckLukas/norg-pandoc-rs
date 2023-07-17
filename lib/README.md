@@ -1,6 +1,6 @@
 <div>
 
-# Pandoc Reader for Norg Files
+# Neorg Pandoc Lib
 
 This is an attempt at implementing a pandoc reader in rust that can
 handle the norg File Format. Since  pandoc has no native support for
