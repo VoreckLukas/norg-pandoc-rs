@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs: 
       readme: ${{ steps.filter.outputs.readme }}
+      lib_readme: ${{ steps.filter.outputs.lib_readme }}
     steps:
       - uses: actions/checkout@v3
       - uses: dorny/paths-filter@v2
@@ -20,13 +21,14 @@ jobs:
         with:
           filters: |
             readme: README.norg
+            lib_readme: lib/README.norg
   docs:
     runs-on: ubuntu-latest
     permissions: 
       contents: write
     needs:
       - scan_changes
-    if: ${{ needs.scan_changes.outputs.readme == 'true' }}
+    if: ${{ needs.scan_changes.outputs.readme == 'true' || needs.scan_changes.outputs.lib_readme == 'true' }}
     steps:
       - uses: actions/checkout@v3
       - run: sudo apt-get install -y pandoc

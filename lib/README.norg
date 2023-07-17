@@ -1,7 +1,7 @@
 * Pandoc Reader for Norg Files
 
   This is an attempt at implementing a pandoc reader in rust that can handle the norg File Format. Since 
-  pandoc has no native support for rust it will output the AST
+  pandoc has no native support for rust it will output the AST root node
   Currently it supports Layer 2 as well as selected other things:
   - Inline link targets
   - Wiki Links
