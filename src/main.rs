@@ -125,11 +125,11 @@ fn main() {
                 thread_pool.execute(move || {
                     parse_file(
                         &entry,
-                        &*to,
+                        &to,
                         pandoc_args.as_deref(),
                         &output,
                         api_version,
-                        &*workspace_root,
+                        &workspace_root,
                     );
                 });
             }

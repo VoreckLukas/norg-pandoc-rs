@@ -81,7 +81,7 @@ pub fn meta(parse_meta: &mut Meta) -> Block {
                         .node()
                         .utf8_text(parse_meta.source)
                         .unwrap()
-                        .split(":");
+                        .split(':');
                     let key = if let Some(key) = key_value.next() {
                         if key == "authors" {
                             String::from("author")

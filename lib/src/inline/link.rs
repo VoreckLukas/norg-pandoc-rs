@@ -88,7 +88,7 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
                 .node()
                 .utf8_text(parse_meta.source)
                 .unwrap()
-                .replace("~", dirs::home_dir().unwrap().to_str().unwrap());
+                .replace('~', dirs::home_dir().unwrap().to_str().unwrap());
             let description = vec![Inline::Str(file.clone())];
 
             ((file, String::new()), description)
@@ -159,6 +159,8 @@ fn parse_target(parse_meta: &mut Meta) -> ((String, String), Vec<Inline>) {
     }
 }
 
+type LinkVec<'a> = Vec<(&'a mut (String, String), String)>;
+
 pub(crate) fn resolve_links(blocks: &mut [Block]) {
     let mut targets = HashMap::new();
     let magic_links = Rc::new(RefCell::new(Vec::new()));
@@ -216,10 +218,10 @@ pub(crate) fn resolve_links(blocks: &mut [Block]) {
 fn link_resolver_blocks<'a>(
     blocks: &'a mut [Block],
     targets: &mut HashMap<String, &'a str>,
-    magic_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    magic_links: Rc<RefCell<LinkVec<'a>>>,
     headings: &mut HashMap<String, &'a str>,
-    wiki_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
-    empty_anchors: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    wiki_links: Rc<RefCell<LinkVec<'a>>>,
+    empty_anchors: Rc<RefCell<LinkVec<'a>>>,
     anchor_definitions: &mut HashMap<String, &'a mut (String, String)>,
 ) {
     for block in blocks {
@@ -275,9 +277,9 @@ fn link_resolver_blocks<'a>(
 fn link_resolver_inlines<'a>(
     inlines: &'a mut [Inline],
     targets: &mut HashMap<String, &'a str>,
-    magic_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
-    wiki_links: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
-    empty_anchors: Rc<RefCell<Vec<(&'a mut (String, String), String)>>>,
+    magic_links: Rc<RefCell<LinkVec<'a>>>,
+    wiki_links: Rc<RefCell<LinkVec<'a>>>,
+    empty_anchors: Rc<RefCell<LinkVec<'a>>>,
     anchor_definitions: &mut HashMap<String, &'a mut (String, String)>,
 ) {
     for inline in inlines {
