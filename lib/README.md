@@ -11,7 +11,11 @@ well as selected other things:
 
   - Wiki Links 
 
-  - `.image`
+  - `.image` 
+
+  - Todo items: 
+    
+      - Urgent (`(!)`)
 
 <div>
 
