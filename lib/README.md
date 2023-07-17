@@ -4,11 +4,8 @@
 
 This is an attempt at implementing a pandoc reader in rust that can
 handle the norg File Format. Since  pandoc has no native support for
-rust it will output the AST in json representation which can then be 
-piped into pandoc. Example `./norg-pandoc-tree-sitter README.norg |
-pandoc --from=json -o README.md`
-
-Currently it supports Layer 2 as well as selected other things: 
+rust it will output the AST root node Currently it supports Layer 2 as
+well as selected other things: 
 
   - Inline link targets 
 
