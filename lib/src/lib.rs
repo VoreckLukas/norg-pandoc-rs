@@ -57,7 +57,7 @@ pub fn parse<P: AsRef<Path>>(
 #[cfg(feature = "debug")]
 fn debug_tree(parse_meta: &mut Meta, indentlevel: usize) {
     let indent = " ".repeat(indentlevel * 3);
-    eprintln!(
+    println!(
         "{indent}{}",
         //"{indent}{}: {}",
         parse_meta.tree.node().kind(),
