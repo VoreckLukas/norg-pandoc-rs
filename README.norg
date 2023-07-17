@@ -1,3 +1,11 @@
+@document.meta
+title: Neorg Pandoc Parser
+description: The README of binary
+authors: Lukas Voreck
+updated: 2023-07-17
+version: 1.0.0
+@end
+
 * Norg Pandoc Parser
 
   This is a tool for parsing norg files into any other file format with pandoc.

@@ -1,4 +1,12 @@
-* Pandoc Reader for Norg Files
+@document.meta
+title: Neorg Pandoc Lib
+description: The README of the library backbone
+authors: Lukas Voreck
+updated: 2023-07-17
+version: 2.0.0
+@end
+
+* Neorg Pandoc Lib
 
   This is an attempt at implementing a pandoc reader in rust that can handle the norg File Format. Since 
   pandoc has no native support for rust it will output the AST root node
