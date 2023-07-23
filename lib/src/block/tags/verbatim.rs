@@ -1,3 +1,8 @@
+use std::{
+    io::Write,
+    process::{Command, Stdio},
+};
+
 use pandoc_ast::{Block, MetaValue};
 
 use crate::Meta;
@@ -156,6 +161,31 @@ pub fn general(parse_meta: &mut Meta) -> Block {
     }
 
     let content = parse_meta.tree.node().utf8_text(parse_meta.source).unwrap();
+
+    if classes.first().unwrap() == "table" {
+        let mut pandoc_command = Command::new("pandoc")
+            .arg("--from=gfm")
+            .arg("--to=json")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("Couldn't spawn pandoc");
+        let mut stdin = pandoc_command.stdin.take().unwrap();
+        stdin
+            .write_all(content.as_bytes())
+            .expect("Couldnt write to pandocs stdin");
+        stdin.flush().unwrap();
+        drop(stdin);
+        if let Ok(output) = pandoc_command.wait_with_output() {
+            let output = String::from_utf8_lossy(&output.stdout);
+            let table = pandoc_ast::Pandoc::from_json(&output).blocks;
+            if table.len() == 1 && matches!(table.first().unwrap(), Block::Table(_, _, _, _, _, _))
+            {
+                parse_meta.tree.goto_parent();
+                return Block::Div((String::new(), Vec::from(&classes[1..]), vec![]), table);
+            }
+        }
+    }
 
     parse_meta.tree.goto_parent();
 

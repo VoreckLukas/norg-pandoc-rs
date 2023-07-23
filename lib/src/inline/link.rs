@@ -268,7 +268,8 @@ fn link_resolver_blocks<'a>(
                     anchor_definitions,
                 );
             }
-            Block::HorizontalRule | Block::CodeBlock(_, _) => { /* Ignore */ }
+            Block::Table(_, _, _, _, _, _) | Block::HorizontalRule | Block::CodeBlock(_, _) => { /* Ignore */
+            }
             _ => unreachable!("{:?}", block),
         }
     }
