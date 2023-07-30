@@ -93,7 +93,7 @@ fn main() {
         } else {
             input.clone()
         };
-        let workspace_root = Arc::new(output.clone());
+        let workspace_root = Arc::new(input.clone());
         let directory_walker = WalkDir::new(&input).into_iter();
         let thread_pool = if let Some(jobs) = jobs {
             rusty_pool::Builder::new()
