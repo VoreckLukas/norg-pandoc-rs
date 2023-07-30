@@ -7,7 +7,7 @@ use pandoc_ast::{Block, MetaValue};
 
 use crate::Meta;
 
-pub fn parse(parse_meta: &mut Meta) -> Block {
+pub(in crate::block) fn parse(parse_meta: &mut Meta) -> Block {
     if !parse_meta.tree.goto_first_child() || !parse_meta.tree.goto_next_sibling() {
         unreachable!()
     }
@@ -21,7 +21,7 @@ pub fn parse(parse_meta: &mut Meta) -> Block {
     }
 }
 
-pub fn code(parse_meta: &mut Meta) -> Block {
+pub(in crate::block) fn code(parse_meta: &mut Meta) -> Block {
     loop {
         if !parse_meta.tree.goto_next_sibling() || parse_meta.tree.node().kind() != "_space" {
             break;
@@ -70,7 +70,7 @@ pub fn code(parse_meta: &mut Meta) -> Block {
     Block::CodeBlock(parameters, content.to_owned())
 }
 
-pub fn meta(parse_meta: &mut Meta) -> Block {
+pub(in crate::block) fn meta(parse_meta: &mut Meta) -> Block {
     while parse_meta.tree.node().kind() != "ranged_verbatim_tag_content" {
         if !parse_meta.tree.goto_next_sibling() {
             unreachable!()
@@ -116,7 +116,7 @@ pub fn meta(parse_meta: &mut Meta) -> Block {
     Block::Null
 }
 
-pub fn general(parse_meta: &mut Meta) -> Block {
+pub(in crate::block) fn general(parse_meta: &mut Meta) -> Block {
     let mut classes = vec![parse_meta
         .tree
         .node()

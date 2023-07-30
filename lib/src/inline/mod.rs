@@ -8,7 +8,7 @@ mod attached;
 pub mod detached_extension;
 pub mod link;
 
-pub fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
+pub(super) fn parse(parse_meta: &mut Meta) -> LinkedList<Inline> {
     let mut inlines = match parse_meta.tree.node().kind() {
         "paragraph" | "paragraph_segment" => {
             if parse_meta.tree.goto_first_child() {

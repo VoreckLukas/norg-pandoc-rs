@@ -2,7 +2,7 @@ use pandoc_ast::{Block, Inline};
 
 use crate::Meta;
 
-pub fn parse(parse_meta: &mut Meta) -> Block {
+pub(in crate::block) fn parse(parse_meta: &mut Meta) -> Block {
     if !parse_meta.tree.goto_first_child() || !parse_meta.tree.goto_next_sibling() {
         unreachable!()
     }

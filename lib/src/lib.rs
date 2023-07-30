@@ -7,7 +7,7 @@ mod block;
 mod document;
 mod inline;
 
-pub struct Meta<'a> {
+struct Meta<'a> {
     tree: TreeCursor<'a>,
     source: &'a [u8],
     metadata: Map<String, MetaValue>,

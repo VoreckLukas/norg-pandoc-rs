@@ -15,7 +15,7 @@ const DEFAULT_ORDERED_ATTR: (i64, ListNumberStyle, ListNumberDelim) = (
     ListNumberDelim::DefaultDelim,
 );
 
-pub fn parse(parse_meta: &mut Meta) -> Block {
+pub(super) fn parse(parse_meta: &mut Meta) -> Block {
     if parse_meta.tree.goto_first_child() {
         let (list, kind, nesting) = parse_list(parse_meta);
         let mut list = list.into_iter().collect();

@@ -10,7 +10,7 @@ mod paragraph;
 mod quote;
 mod tags;
 
-pub fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
+pub(super) fn parse(parse_meta: &mut Meta) -> VecDeque<Block> {
     let block = match parse_meta.tree.node().kind() {
         "paragraph" => paragraph::parse(parse_meta),
 

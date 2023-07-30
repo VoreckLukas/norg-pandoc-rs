@@ -4,7 +4,7 @@ use pandoc_ast::Block;
 
 use crate::{block, inline, Meta};
 
-pub fn parse(parse_meta: &mut Meta) -> Block {
+pub(super) fn parse(parse_meta: &mut Meta) -> Block {
     let nesting: i64 = {
         let number_index = parse_meta
             .tree

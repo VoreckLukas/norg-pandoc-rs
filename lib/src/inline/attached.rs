@@ -13,7 +13,7 @@ pub enum Type {
     Code,
 }
 
-pub fn parse(parse_meta: &mut Meta, attached_type: Type) -> Inline {
+pub(super) fn parse(parse_meta: &mut Meta, attached_type: Type) -> Inline {
     if !matches!(attached_type, Type::Code) {
         let content = if parse_meta.tree.goto_first_child() {
             inline::parse(parse_meta).into_iter().collect()

@@ -4,7 +4,7 @@ use pandoc_ast::Block;
 
 use crate::{inline, Meta};
 
-pub fn parse(parse_meta: &mut Meta) -> Block {
+pub(super) fn parse(parse_meta: &mut Meta) -> Block {
     if parse_meta.tree.goto_first_child() {
         let (quote, nesting) = parse_quote(parse_meta);
         let mut quote = quote.into_iter().collect();
