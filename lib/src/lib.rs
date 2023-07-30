@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use pandoc_ast::{Map, MetaValue, Pandoc};
 use tree_sitter::{Parser, TreeCursor};
@@ -15,8 +15,8 @@ struct Meta<'a> {
     workspace_root: &'a Path,
 }
 
-pub fn parse<P: AsRef<Path>>(
-    file: P,
+pub fn parse(
+    file: &str,
     target_format: &str,
     api_version: Vec<u32>,
     workspace_root: &Path,
@@ -25,7 +25,7 @@ pub fn parse<P: AsRef<Path>>(
     let mut parser = Parser::new();
     parser.set_language(language).unwrap();
 
-    let unparsed = fs::read_to_string(file).expect("Cannot read file");
+    let unparsed = file;
     let tree = parser.parse(&unparsed, None).unwrap();
 
     #[cfg(feature = "debug")]

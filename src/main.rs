@@ -156,7 +156,9 @@ fn parse_file(
         }
     }
 
-    let ast = norg_pandoc_ast::parse(file, to, api_version, workspace_root);
+    let file = fs::read_to_string(file).expect("Cannot read file");
+
+    let ast = norg_pandoc_ast::parse(&file, to, api_version, workspace_root);
 
     let mut pandoc_command = Command::new("pandoc");
 
