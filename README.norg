@@ -6,6 +6,8 @@ updated: 2023-07-17
 version: 1.0.0
 @end
 
+After some hiatus back in action
+
 * Norg Pandoc Parser
 
   This is a tool for parsing norg files into any other file format with pandoc.
