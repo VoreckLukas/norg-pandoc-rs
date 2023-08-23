@@ -5,13 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   scan_changes:
     runs-on: ubuntu-latest
-    outputs: 
+    outputs:
       readme: ${{ steps.filter.outputs.readme }}
       lib_readme: ${{ steps.filter.outputs.lib_readme }}
     steps:
@@ -24,17 +21,23 @@ jobs:
             lib_readme: lib/README.norg
   docs:
     runs-on: ubuntu-latest
-    permissions: 
+    permissions:
       contents: write
     needs:
       - scan_changes
     if: ${{ needs.scan_changes.outputs.readme == 'true' || needs.scan_changes.outputs.lib_readme == 'true' }}
     steps:
+      - name: Install nix
+        uses: cachix/install-nix-action@master
+        with:
+          install_url: https://nixos.org/nix/install
+          extra_nix_config: experimental-features = nix-command flakes
+
       - uses: actions/checkout@v3
-      - run: sudo apt-get install -y pandoc
-      - uses: Swatinem/rust-cache@v2
+
       - name: Generate documentation
-        run: cargo run -- -t md ./ -- --to=gfm
+        run: nix run . -- -t md ./ -- --to=gfm
+
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:

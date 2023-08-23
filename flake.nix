@@ -17,15 +17,15 @@
         naersk' = pkgs.callPackage naersk { };
 
       in
-      rec {
+      {
         # For `nix build` & `nix run`:
-        defaultPackage = naersk'.buildPackage {
+        packages.default = naersk'.buildPackage {
           src = ./.;
           buildInputs = [ pkgs.pandoc ];
         };
 
         # For `nix develop` (optional, can be skipped):
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [ rustc cargo pandoc ];
         };
       }
