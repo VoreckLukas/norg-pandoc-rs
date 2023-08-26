@@ -15,3 +15,6 @@ norg_pandoc_ast = { path = "lib" }
 
 [features]
 debug = ["norg_pandoc_ast/debug"]
+
+[patch.crates-io]
+pandoc_ast =  { git = "https://github.com/VoreckLukas/pandoc-ast.git" }

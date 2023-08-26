@@ -392,8 +392,7 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 [[package]]
 name = "pandoc_ast"
 version = "0.8.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b89d3de9c9dd508abc39cd5c0ab022b49ef5b18145ce30abacf00333bba1a74"
+source = "git+https://github.com/VoreckLukas/pandoc-ast.git#16e826662ad5f779f509092cb6c2bc85d200d59a"
 dependencies = [
  "serde",
  "serde_derive",
