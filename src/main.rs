@@ -9,6 +9,8 @@ use std::{
 use clap::{arg, command, Args, Parser};
 use walkdir::WalkDir;
 
+const PANDOC_PATH: Option<&str> = option_env!("PANDOC_PATH");
+
 /// This is a cli tool to convert a norg tool to any pandoc supported file format.
 ///
 /// It uses pandoc under the hood
@@ -160,7 +162,7 @@ fn parse_file(
 
     let ast = norg_pandoc_ast::parse(&file, to, api_version, workspace_root);
 
-    let mut pandoc_command = Command::new("pandoc");
+    let mut pandoc_command = Command::new(PANDOC_PATH.unwrap_or("pandoc"));
 
     if let Some(arg) = pandoc_args {
         pandoc_command.arg(arg);
@@ -192,7 +194,7 @@ fn parse_file(
 }
 
 fn get_api_version() -> Vec<u32> {
-    let mut pandoc_command = Command::new("pandoc")
+    let mut pandoc_command = Command::new(PANDOC_PATH.unwrap_or("pandoc"))
         .arg("--from=gfm")
         .arg("--to=json")
         .stdin(Stdio::piped())

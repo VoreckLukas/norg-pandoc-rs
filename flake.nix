@@ -22,11 +22,13 @@
         packages.default = naersk'.buildPackage {
           src = ./.;
           buildInputs = [ pkgs.pandoc ];
+          PANDOC_PATH = pkgs.lib.getExe pkgs.pandoc;
         };
 
         # For `nix develop` (optional, can be skipped):
         devShells.default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [ rustc cargo pandoc ];
+          nativeBuildInputs = with pkgs; [ rustc cargo ];
+          buildInputs = [ pkgs.pandoc ];
         };
       }
     );
