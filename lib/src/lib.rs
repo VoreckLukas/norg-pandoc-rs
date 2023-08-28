@@ -7,6 +7,7 @@ mod block;
 mod document;
 mod inline;
 
+/// Everything needed to parsse a document
 struct Meta<'a> {
     tree: TreeCursor<'a>,
     source: &'a [u8],
@@ -15,8 +16,9 @@ struct Meta<'a> {
     workspace_root: &'a Path,
 }
 
+/// Parse the given norg input into a pandoc ast
 pub fn parse(
-    file: &str,
+    input: &str,
     target_format: &str,
     api_version: Vec<u32>,
     workspace_root: &Path,
@@ -25,15 +27,14 @@ pub fn parse(
     let mut parser = Parser::new();
     parser.set_language(language).unwrap();
 
-    let unparsed = file;
-    let tree = parser.parse(&unparsed, None).unwrap();
+    let tree = parser.parse(&input, None).unwrap();
 
     #[cfg(feature = "debug")]
     {
         debug_tree(
             &mut Meta {
                 tree: tree.walk(),
-                source: unparsed.as_bytes(),
+                source: input.as_bytes(),
                 metadata: Map::default(),
                 target_format,
                 workspace_root,
@@ -45,7 +46,7 @@ pub fn parse(
     document::parse(
         Meta {
             tree: tree.walk(),
-            source: unparsed.as_bytes(),
+            source: input.as_bytes(),
             metadata: Map::default(),
             target_format,
             workspace_root,
@@ -54,12 +55,13 @@ pub fn parse(
     )
 }
 
+/// Print a tree sitter tree for debugging purposes
 #[cfg(feature = "debug")]
 fn debug_tree(parse_meta: &mut Meta, indentlevel: usize) {
     let indent = " ".repeat(indentlevel * 3);
     println!(
-        "{indent}{}",
-        //"{indent}{}: {}",
+        "{indent}{:?}",
+        //"{indent}{:?}: {:?}",
         parse_meta.tree.node().kind(),
         //parse_meta.tree.node().utf8_text(parse_meta.source).unwrap()
     );

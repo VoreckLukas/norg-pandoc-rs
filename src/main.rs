@@ -37,11 +37,13 @@ struct Arguments {
 }
 
 fn main() {
+    // Manually adding the varargs at the end is mandatory as there is no macro for it
     let cli = command!();
     let cli = Arguments::augment_args(cli)
         .arg(arg!([PANDOC_ARGS] ... "arguments to pass on to pandonc").last(true));
     let matches = cli.get_matches();
 
+    // Manually extracting them is needed because of the mandatory adition above
     let input = matches.get_one::<PathBuf>("input").unwrap().to_owned();
     let output = matches.get_one::<PathBuf>("output").map(|v| v.to_owned());
     let to = matches.get_one::<String>("to").unwrap().to_owned();
@@ -58,6 +60,7 @@ fn main() {
     let api_version = get_api_version();
 
     if input.is_file() {
+        // If the input is a single file, only parse that
         let output = match output {
             Some(mut output) => {
                 if output.is_file() {
@@ -85,6 +88,7 @@ fn main() {
             output.parent().unwrap(),
         );
     } else {
+        // if the input is a directory parse all files
         let output = if let Some(output) = output {
             if output.is_file() {
                 eprintln!("When the input is a directory, the output can't be a file");
@@ -140,6 +144,7 @@ fn main() {
     }
 }
 
+/// Parse a single file
 fn parse_file(
     file: &Path,
     to: &str,
@@ -193,6 +198,7 @@ fn parse_file(
     }
 }
 
+/// Api versions keep changing so we need this hack to get the api version of the installed pandoc
 fn get_api_version() -> Vec<u32> {
     let mut pandoc_command = Command::new(PANDOC_PATH.unwrap_or("pandoc"))
         .arg("--from=gfm")
