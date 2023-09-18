@@ -7,7 +7,7 @@ edition = "2021"
 members = ["lib"]
 
 [dependencies]
-clap = { version = "4.3.23", features = ["derive", "cargo"] }
+clap = { version = "4.4.3", features = ["derive", "cargo"] }
 rusty_pool = "0.7.0"
 pandoc_ast = "0.8.4"
 walkdir = "2.3.3"
