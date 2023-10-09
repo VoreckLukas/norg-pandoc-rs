@@ -606,7 +606,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-norg"
 version = "0.1.0"
-source = "git+https://github.com/nvim-neorg/tree-sitter-norg.git#1a305093569632de50f9a316ff843dcda25b4ef5"
+source = "git+https://github.com/nvim-neorg/tree-sitter-norg.git#014073fe8016d1ac440c51d22c77e3765d8f6855"
 dependencies = [
  "cc",
  "tree-sitter",
