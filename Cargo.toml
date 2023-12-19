@@ -1,20 +1,17 @@
 [package]
 name = "norg_pandoc_rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [workspace]
 members = ["lib"]
 
 [dependencies]
-clap = { version = "4.3.23", features = ["derive", "cargo"] }
+clap = { version = "4.4.11", features = ["derive", "cargo"] }
 rusty_pool = "0.7.0"
-pandoc_ast = "0.8.4"
-walkdir = "2.3.3"
+pandoc_ast = "0.8.5"
+walkdir = "2.4.0"
 norg_pandoc_ast = { path = "lib" }
 
 [features]
 debug = ["norg_pandoc_ast/debug"]
-
-[patch.crates-io]
-pandoc_ast =  { git = "https://github.com/VoreckLukas/pandoc-ast.git" }
