@@ -1,0 +1,13 @@
+@document.meta
+title: README
+description:
+authors: lukas
+categories:
+created: 2024-02-02T00:56:04+0100
+updated: 2024-02-02T00:56:04+0100
+version: 1.1.1
+@end
+
+This is an attempt at implementing a pandoc reader in rust that can handle the norg file format.
+Since pandoc has no native support for rust it will output the AST root node.
+Currently I'm working on reimplementing layer 1

@@ -17,6 +17,9 @@
           inherit system;
         };
 
+        tex = pkgs.texlive.combined.scheme-small;
+        commonInputs = with pkgs; [ pandoc ] ++ [ tex ];
+
         naersk' = pkgs.callPackage naersk { };
 
       in
@@ -24,14 +27,14 @@
         # For `nix build` & `nix run`:
         packages.default = naersk'.buildPackage {
           src = ./.;
-          buildInputs = [ pkgs.pandoc ];
+          buildInputs = commonInputs;
           PANDOC_PATH = pkgs.lib.getExe pkgs.pandoc;
         };
 
         # For `nix develop` (optional, can be skipped):
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [ rustc cargo ];
-          buildInputs = [ pkgs.pandoc ];
+          buildInputs = commonInputs;
         };
       }
     );

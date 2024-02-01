@@ -55,3 +55,6 @@ of the norg specification there
 - :
   $ -1
   Pandoc couldn't be run. Check the error message for more information
+- :
+  $ 3
+  The parent directory of the output file couldn't be created

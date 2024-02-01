@@ -1,6 +1,7 @@
 use std::{
+    fs,
     io::Write,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{exit, Command, Stdio},
     sync::Arc,
 };
@@ -70,12 +71,15 @@ fn main() {
             output
         });
 
-        println!("{input:?}\n{to}\n{pandoc_args:?}\n{output:?}\n{api_version:?}",);
+        parse_file(
+            &input,
+            pandoc_args.as_deref(),
+            &output,
+            api_version,
+            &pandoc_path,
+        );
     } else {
         let output = output.unwrap_or(input.clone());
-        if !output.exists() {
-            std::fs::create_dir_all(&output).unwrap();
-        }
 
         let directory_walker = WalkDir::new(&input).into_iter();
         let thread_pool = if let Some(jobs) = jobs {
@@ -91,8 +95,8 @@ fn main() {
         };
 
         // Create arcs
-        let to = Arc::new(to);
         let pandoc_args = Arc::new(pandoc_args);
+        let pandoc_path = Arc::new(pandoc_path);
 
         for entry in directory_walker {
             let entry = entry.unwrap().path().to_path_buf();
@@ -105,16 +109,74 @@ fn main() {
                 let mut output = output.clone();
                 output.push(entry.strip_prefix(&input).unwrap());
                 output.set_extension(&*to);
-                let to = to.clone();
                 let pandoc_args = pandoc_args.clone();
                 let api_version = api_version.clone();
+                let pandoc_path = pandoc_path.clone();
 
                 thread_pool.execute(move || {
-                    println!("{entry:?}\n{to:?}\n{pandoc_args:?}\n{output:?}\n{api_version:?}");
+                    parse_file(
+                        &entry,
+                        pandoc_args.as_deref(),
+                        &output,
+                        api_version,
+                        &pandoc_path,
+                    )
                 });
             }
         }
         thread_pool.join();
+    }
+}
+
+fn parse_file(
+    file: &Path,
+    pandoc_args: Option<&str>,
+    output_file: &Path,
+    api_version: Vec<u32>,
+    pandoc_path: &str,
+) {
+    if !output_file.parent().unwrap().exists() {
+        if let Err(e) = fs::create_dir_all(output_file.parent().unwrap()) {
+            eprintln!(
+                "Error creating directory {}: {e}",
+                output_file.parent().unwrap().to_str().unwrap()
+            );
+            exit(3);
+        }
+    }
+
+    let text = fs::read_to_string(file).expect("Cannot read file");
+
+    let ast = norg_pandoc_ast::parse(&text, api_version);
+
+    let mut pandoc_command = Command::new(pandoc_path);
+
+    if let Some(arg) = pandoc_args {
+        pandoc_command.arg(arg);
+    }
+
+    let mut pandoc_process = pandoc_command
+        .arg("--from=json")
+        .arg("-o")
+        .arg(output_file)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Couldn't spawn pandoc");
+
+    let mut stdin = pandoc_process.stdin.take().unwrap();
+    stdin
+        .write_all(ast.to_json().as_bytes())
+        .expect("couldn't write to pandoc stdin");
+    drop(stdin);
+
+    match pandoc_process.wait_with_output() {
+        Ok(output) => println!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ),
+        Err(e) => pandoc_error(e),
     }
 }
 
