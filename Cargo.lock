@@ -321,7 +321,7 @@ checksum = "f665ee40bc4a3c5590afb1e9677db74a508659dfd71e126420da8274909a0167"
 
 [[package]]
 name = "norg_pandoc_ast"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "dirs",
  "pandoc_ast",
@@ -331,7 +331,7 @@ dependencies = [
 
 [[package]]
 name = "norg_pandoc_rs"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "clap",
  "norg_pandoc_ast",
@@ -563,8 +563,8 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-norg"
-version = "0.1.0"
-source = "git+https://github.com/nvim-neorg/tree-sitter-norg.git#014073fe8016d1ac440c51d22c77e3765d8f6855"
+version = "0.0.1"
+source = "git+https://github.com/nvim-neorg/tree-sitter-norg3.git#868cea2adb9b04f0c8e6b62c848af41ba36833d4"
 dependencies = [
  "cc",
  "tree-sitter",

@@ -1,0 +1,57 @@
+@document.meta
+title: README
+description:
+authors: lukas
+categories:
+created: 2023-12-20T14:07:40+0100
+updated: 2023-12-20T14:07:40+0100
+version: 1.1.1
+@end
+
+This is a tool for parsing norg files into any other file format with pandoc.
+Multiple files will be parsed in a multithreaded fashion.
+
+This README is about the binary you can use.
+If you're interested in the library under the hood, you can read its {:lib/README:}[README].
+You can also find the {:lib/README:# Supported Layers}[supported layers]
+of the norg specification there
+
+* Installation
+
+  Due to the alpha status of this tool there currently are no prebuilt binaries you could use
+
+  However, if you want to use it, you need to
+  {https://doc.rust-lang.org/cargo/getting-started/installation.html}[install cargo], clone this repo and
+  run `cargo build -r`
+
+** Dependencies
+
+   Due to this tool using Pandoc under the hood, you obviously need to install that
+
+* Usage
+
+  The basic usage is like this: `norg_pandoc_rs -t <file format to convert to> <input path>`
+
+  Here is a list of all arguments:
+
+  - Required:
+  -- The input path. If it's just one file, it will parse that one file. If it is a directory it will parse any `norg` files it can find.
+  -- `-t/--to` The file format to convert to
+  - Optional
+  -- `-o/--output` Directory/File to save the parsed result to. If the input is a directory but this flag
+      is given a file it will error out
+  -- `-j/--jobs` The number of threads to use to parse the directory. The default is double the number of
+      available CPUs
+  -- All arguments that come after a `--` will be passed on to pandoc
+
+* Exit Codes
+
+  I try to use each exit code only once, and usually they are accompanied by an error message.
+  Here are all exit codes with their cause:
+
+- :
+  $ 1
+  The given input path doesn't exist
+- :
+  $ -1
+  Pandoc couldn't be run. Check the error message for more information
