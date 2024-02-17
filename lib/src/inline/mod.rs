@@ -5,6 +5,7 @@ use pandoc_ast::Inline;
 use crate::Meta;
 
 mod attached;
+mod link;
 
 /// Paragraph segments aren't tree sitter nodes but in between nodes so we need
 /// the start and end of where to check for segments and recursively
@@ -29,6 +30,9 @@ pub(super) fn parse(meta: &mut Meta) -> LinkedList<Inline> {
         "superscript" => LinkedList::from([attached::parse(meta, attached::Modifier::Superscript)]),
         "subscript" => LinkedList::from([attached::parse(meta, attached::Modifier::Subscript)]),
         "verbatim" => LinkedList::from([attached::parse(meta, attached::Modifier::Verbatim)]),
+
+        "link" => LinkedList::from([link::parse(meta)]),
+
         "word" | "punctuation" => {
             LinkedList::from([Inline::Str(node.utf8_text(meta.source).unwrap().to_owned())])
         }
