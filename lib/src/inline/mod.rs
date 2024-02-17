@@ -41,10 +41,9 @@ pub(super) fn parse(meta: &mut Meta) -> LinkedList<Inline> {
             LinkedList::from([Inline::Str(content[1..].to_owned())])
         }
 
-        s if s.ends_with("open") => {
-            // Ignore opening tags. There should always be a sibling
-            meta.tree.goto_next_sibling();
-            parse(meta)
+        s if s.ends_with("close") || s.ends_with("open") => {
+            // Ignore opening and closing tags
+            LinkedList::new()
         }
 
         _ => {
@@ -53,7 +52,7 @@ pub(super) fn parse(meta: &mut Meta) -> LinkedList<Inline> {
         }
     };
 
-    if meta.tree.goto_next_sibling() && !meta.tree.node().kind().ends_with("close") {
+    if meta.tree.goto_next_sibling() {
         let mut following = parse(meta);
         inlines.append(&mut following);
     } else {
