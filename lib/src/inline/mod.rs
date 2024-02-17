@@ -36,6 +36,10 @@ pub(super) fn parse(meta: &mut Meta) -> LinkedList<Inline> {
         "word" | "punctuation" => {
             LinkedList::from([Inline::Str(node.utf8_text(meta.source).unwrap().to_owned())])
         }
+        "escape_sequence" => {
+            let content = node.utf8_text(meta.source).unwrap();
+            LinkedList::from([Inline::Str(content[1..].to_owned())])
+        }
 
         s if s.ends_with("open") => {
             // Ignore opening tags. There should always be a sibling
