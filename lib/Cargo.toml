@@ -6,9 +6,8 @@ edition = "2021"
 [dependencies]
 dirs = "5.0.1"
 pandoc_ast = "0.8.5"
-regex = "1.10.3"
 tree-sitter = "0.20.10"
-tree-sitter-norg = { git = "https://github.com/nvim-neorg/tree-sitter-norg3.git" }
+tree-sitter-norg = { git = "https://github.com/nvim-neorg/tree-sitter-norg3/", branch = "beyond-paragraph" }
 
 [features]
 debug = []
