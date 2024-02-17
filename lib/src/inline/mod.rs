@@ -34,6 +34,7 @@ pub(super) fn parse(meta: &mut Meta) -> LinkedList<Inline> {
         }
 
         s if s.ends_with("open") => {
+            // Ignore opening tags. There should always be a sibling
             meta.tree.goto_next_sibling();
             parse(meta)
         }
