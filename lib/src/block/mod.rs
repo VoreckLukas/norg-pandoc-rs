@@ -12,14 +12,6 @@ pub(super) fn parse(meta: &mut Meta) -> VecDeque<Block> {
     let block = match node.kind() {
         "paragraph" => paragraph::parse(meta),
 
-        "\n" => {
-            return if meta.tree.goto_next_sibling() {
-                parse(meta)
-            } else {
-                VecDeque::new()
-            }
-        }
-
         _ => {
             eprintln!("{:?} not implemented", node.kind());
             Block::Plain(vec![Inline::Str(
