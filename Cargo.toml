@@ -10,7 +10,7 @@ members = ["lib"]
 clap = { version = "4.3.23", features = ["derive", "cargo"] }
 rusty_pool = "0.7.0"
 pandoc_ast = "0.8.4"
-walkdir = "2.3.3"
+walkdir = "2.5.0"
 norg_pandoc_ast = { path = "lib" }
 
 [features]
