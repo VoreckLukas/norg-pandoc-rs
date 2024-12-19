@@ -1,35 +1,43 @@
 {
-  description = "A crate to parse norg files with pandoc";
+  description = "A chip8 emu implemented in rust with the bevy game engine";
 
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
-    naersk.url = "github:nix-community/naersk";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, flake-utils, naersk, nixpkgs }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = (import nixpkgs) {
-          inherit system;
-        };
+  outputs =
+    {
+      self,
+      nixpkgs,
+      rust-overlay,
+    }:
+    let
+      system = "x86_64-linux";
 
-        naersk' = pkgs.callPackage naersk { };
+      overlays = [ (import rust-overlay) ];
 
-      in
-      {
-        # For `nix build` & `nix run`:
-        packages.default = naersk'.buildPackage {
-          src = ./.;
-          buildInputs = [ pkgs.pandoc ];
-          PANDOC_PATH = pkgs.lib.getExe pkgs.pandoc;
-        };
-
-        # For `nix develop` (optional, can be skipped):
-        devShells.default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [ rustc cargo ];
-          buildInputs = [ pkgs.pandoc ];
-        };
-      }
-    );
+      pkgs = import nixpkgs { inherit system overlays; };
+    in
+    {
+      devShells.${system}.default =
+        pkgs.mkShell.override
+          {
+            stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
+          }
+          {
+            packages = with pkgs; [
+              (rust-bin.stable.latest.default.override {
+                extensions = [
+                  "rust-src"
+                  "rust-analyzer"
+                ];
+              })
+              taplo
+            ];
+          };
+    };
 }
