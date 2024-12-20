@@ -12,7 +12,7 @@ fn main() {
     pandoc
         .set_input(InputKind::Pipe(json))
         .set_input_format(InputFormat::Json, Vec::new())
-        .set_output(OutputKind::File(PathBuf::from("test/test.pdf")));
+        .set_output(OutputKind::File(PathBuf::from("test/test.html")));
     pandoc.execute().unwrap();
 }
 

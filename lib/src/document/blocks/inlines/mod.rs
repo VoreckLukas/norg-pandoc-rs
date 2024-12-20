@@ -7,11 +7,12 @@ use pandoc_ast::Inline;
 use crate::Meta;
 
 mod attached;
+mod link;
 
 pub fn parse(meta: &mut Meta) -> Result<Vec<Inline>, Utf8Error> {
     pub fn parse_inline(meta: &mut Meta) -> Result<Option<Either<Inline, Vec<Inline>>>, Utf8Error> {
         Ok(match meta.tree.node().kind() {
-            "paragraph_segment" => Some(Either::Right(parse(meta)?)),
+            "paragraph" | "paragraph_segment" => Some(Either::Right(parse(meta)?)),
 
             "_line_break" => Some(Either::Left(Inline::SoftBreak)),
             "_word" => Some(Either::Left(word(meta))),
@@ -39,7 +40,9 @@ pub fn parse(meta: &mut Meta) -> Result<Vec<Inline>, Utf8Error> {
             )?)),
             "verbatim" => Some(Either::Left(attached::parse(meta, AttachedType::Code)?)),
 
-            "_open" | "_close" => {
+            "link" => Some(Either::Left(link::parse(meta)?)),
+
+            "_begin" | "_end" | "_open" | "_close" => {
                 if meta.tree.goto_next_sibling() {
                     parse_inline(meta)?
                 } else {
