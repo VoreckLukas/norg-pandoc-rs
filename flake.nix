@@ -1,6 +1,4 @@
 {
-  description = "A chip8 emu implemented in rust with the bevy game engine";
-
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
     rust-overlay = {
@@ -38,6 +36,7 @@
               })
               taplo
               pandoc
+              texliveMedium
             ];
           };
     };

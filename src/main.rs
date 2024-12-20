@@ -1,13 +1,19 @@
-use std::{env, fs};
+use std::{env, fs, path::PathBuf};
 
-use pandoc::{InputFormat, InputKind, OutputFormat, PandocOutput};
+use pandoc::{InputFormat, InputKind, OutputFormat, OutputKind, PandocOutput};
 use pandoc_ast::Pandoc;
 
 fn main() {
     let file = env::args().nth(1).unwrap();
     let file = fs::read_to_string(file).unwrap();
     let pandoc = norg_pandoc_convert::parse(&file, get_version());
-    panic!("{pandoc:?}");
+    let json = pandoc.unwrap().unwrap().to_json();
+    let mut pandoc = pandoc::new();
+    pandoc
+        .set_input(InputKind::Pipe(json))
+        .set_input_format(InputFormat::Json, Vec::new())
+        .set_output(OutputKind::File(PathBuf::from("test/test.pdf")));
+    pandoc.execute().unwrap();
 }
 
 fn get_version() -> Vec<u32> {
