@@ -4,6 +4,7 @@ use pandoc_ast::Block;
 
 use crate::Meta;
 
+mod heading;
 mod inlines;
 mod list;
 mod quote;
@@ -12,9 +13,18 @@ pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
     fn parse_block(meta: &mut Meta) -> Result<Option<Block>, Utf8Error> {
         Ok(match meta.tree.node().kind() {
             "paragraph" => Some(paragraph(meta)?),
+            "paragraph_segment" => Some(paragraph(meta)?),
             "generic_list" => Some(list::parse(meta)?),
             "quote" => Some(quote::parse(meta)?),
+            s if s.contains("heading") && !s.contains("prefix") => Some(heading::parse(meta)?),
 
+            s if s.contains("prefix") => {
+                if meta.tree.goto_next_sibling() {
+                    parse_block(meta)?
+                } else {
+                    None
+                }
+            }
             "_line_break" | "_paragraph_break" => {
                 if meta.tree.goto_next_sibling() {
                     parse_block(meta)?
