@@ -8,6 +8,7 @@ mod heading;
 pub mod inlines;
 mod list;
 mod quote;
+mod verbatim;
 
 pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
     fn parse_block(meta: &mut Meta) -> Result<Option<Block>, Utf8Error> {
@@ -17,6 +18,7 @@ pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
             "generic_list" => Some(list::parse(meta)?),
             "quote" => Some(quote::parse(meta)?),
             s if s.contains("heading") && !s.contains("prefix") => Some(heading::parse(meta)?),
+            "ranged_verbatim_tag" => Some(verbatim::parse(meta)?),
 
             s if s.contains("prefix") => {
                 if meta.tree.goto_next_sibling() {
