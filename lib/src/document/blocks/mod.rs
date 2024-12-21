@@ -5,11 +5,16 @@ use pandoc_ast::Block;
 use crate::Meta;
 
 mod inlines;
+mod list;
+mod quote;
 
 pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
     fn parse_block(meta: &mut Meta) -> Result<Option<Block>, Utf8Error> {
         Ok(match meta.tree.node().kind() {
             "paragraph" => Some(paragraph(meta)?),
+            "generic_list" => Some(list::parse(meta)?),
+            "quote" => Some(quote::parse(meta)?),
+
             "_line_break" | "_paragraph_break" => {
                 if meta.tree.goto_next_sibling() {
                     parse_block(meta)?
@@ -34,13 +39,5 @@ pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
 }
 
 fn paragraph(meta: &mut Meta) -> Result<Block, Utf8Error> {
-    let inlines = if meta.tree.goto_first_child() {
-        let inlines = inlines::parse(meta)?;
-        meta.tree.goto_parent();
-        inlines
-    } else {
-        Vec::new()
-    };
-
-    Ok(Block::Para(inlines))
+    Ok(Block::Para(inlines::parse(meta)?))
 }

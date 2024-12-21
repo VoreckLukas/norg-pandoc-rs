@@ -29,3 +29,24 @@ pub fn parse(source: &str, pandoc_api_version: Vec<u32>) -> Option<Result<Pandoc
         )
     })
 }
+
+fn debug(meta: &mut Meta) -> ! {
+    fn print(meta: &mut Meta, indent: u8) {
+        for _ in 0..indent {
+            print!("  ");
+        }
+        println!("{}", meta.tree.node().kind());
+        if meta.tree.goto_first_child() {
+            loop {
+                print(meta, indent + 1);
+                if !meta.tree.goto_next_sibling() {
+                    break;
+                }
+            }
+            meta.tree.goto_parent();
+        }
+    }
+
+    print(meta, 0);
+    panic!()
+}

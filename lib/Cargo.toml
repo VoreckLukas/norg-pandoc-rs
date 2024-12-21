@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-either = "1.13.0"
 pandoc_ast = "0.8.6"
 tree-sitter = "~0.20.0"
 tree-sitter-norg = { git = "https://github.com/nvim-neorg/tree-sitter-norg.git" }
