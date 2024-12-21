@@ -6,7 +6,7 @@ use pandoc_ast::Inline;
 use crate::Meta;
 
 mod attached;
-mod link;
+pub mod link;
 
 pub fn parse(meta: &mut Meta) -> Result<Vec<Inline>, Utf8Error> {
     pub fn parse_inline(meta: &mut Meta) -> Result<Option<Inline>, Utf8Error> {
@@ -31,6 +31,8 @@ pub fn parse(meta: &mut Meta) -> Result<Vec<Inline>, Utf8Error> {
             "verbatim" => Some(attached::parse(meta, AttachedType::Code)?),
 
             "link" => Some(link::parse(meta)?),
+            "anchor_declaration" => Some(link::anchor_declaration(meta)?),
+            "anchor_definition" => Some(link::anchor_definition(meta)?),
 
             "_begin" | "_end" | "_open" | "_close" => {
                 if meta.tree.goto_next_sibling() {

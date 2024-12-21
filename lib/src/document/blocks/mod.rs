@@ -5,7 +5,7 @@ use pandoc_ast::Block;
 use crate::Meta;
 
 mod heading;
-mod inlines;
+pub mod inlines;
 mod list;
 mod quote;
 

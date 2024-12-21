@@ -27,7 +27,17 @@ pub fn parse(meta: &mut Meta) -> Result<Block, Utf8Error> {
         (String::new(), Vec::new(), Vec::new()),
         iter::once(Block::Header(
             nesting,
-            (String::new(), Vec::new(), Vec::new()),
+            (
+                format!("heading{nesting}{}", {
+                    meta.tree.goto_first_child();
+                    meta.tree.goto_next_sibling();
+                    let source = meta.tree.node().utf8_text(meta.source)?;
+                    meta.tree.goto_parent();
+                    source
+                }),
+                Vec::new(),
+                Vec::new(),
+            ),
             heading,
         ))
         .chain(content)
