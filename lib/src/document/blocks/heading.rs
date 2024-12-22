@@ -1,10 +1,10 @@
-use std::{iter, str::Utf8Error};
+use std::iter;
 
 use pandoc_ast::Block;
 
-use crate::Meta;
+use crate::{Error, Meta, Result};
 
-pub fn parse(meta: &mut Meta) -> Result<Block, Utf8Error> {
+pub fn parse(meta: &mut Meta) -> Result<Block> {
     let nesting = {
         let number_index = meta
             .tree
@@ -12,16 +12,18 @@ pub fn parse(meta: &mut Meta) -> Result<Block, Utf8Error> {
             .kind()
             .chars()
             .position(|c| c.is_ascii_digit())
-            .expect("There is always a number in the heading kind");
+            .ok_or(Error::MalformedTree("Encountered heading without nesting"))?;
         meta.tree.node().kind()[number_index..]
             .parse()
-            .expect("This is always a number")
+            .map_err(|_| Error::MalformedTree("Couldn't parse heading nesting"))?
     };
 
     let mut content = super::parse(meta)?.into_iter();
 
     let Some(Block::Para(heading)) = content.next() else {
-        unreachable!("First element is always a paragraph segment")
+        return Err(Error::MalformedTree(
+            "Encountered heading without a paragraph as first element",
+        ));
     };
     Ok(Block::Div(
         (String::new(), Vec::new(), Vec::new()),

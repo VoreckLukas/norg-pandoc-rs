@@ -1,8 +1,6 @@
-use std::str::Utf8Error;
-
 use pandoc_ast::Block;
 
-use crate::Meta;
+use crate::{Meta, Result};
 
 mod heading;
 pub mod inlines;
@@ -10,8 +8,8 @@ mod list;
 mod quote;
 mod verbatim;
 
-pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
-    fn parse_block(meta: &mut Meta) -> Result<Option<Block>, Utf8Error> {
+pub fn parse(meta: &mut Meta) -> Result<Vec<Block>> {
+    fn parse_block(meta: &mut Meta) -> Result<Option<Block>> {
         Ok(match meta.tree.node().kind() {
             "paragraph" => Some(paragraph(meta)?),
             "paragraph_segment" => Some(paragraph(meta)?),
@@ -27,7 +25,10 @@ pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
                     None
                 }
             }
-            "_line_break" | "_paragraph_break" => {
+            "strong_paragraph_delimiter"
+            | "weak_paragraph_delimiter"
+            | "_line_break"
+            | "_paragraph_break" => {
                 if meta.tree.goto_next_sibling() {
                     parse_block(meta)?
                 } else {
@@ -50,6 +51,6 @@ pub fn parse(meta: &mut Meta) -> Result<Vec<Block>, Utf8Error> {
     Ok(blocks)
 }
 
-fn paragraph(meta: &mut Meta) -> Result<Block, Utf8Error> {
+fn paragraph(meta: &mut Meta) -> Result<Block> {
     Ok(Block::Para(inlines::parse(meta)?))
 }

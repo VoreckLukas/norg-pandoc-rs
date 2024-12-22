@@ -1,10 +1,10 @@
-use std::{collections::HashMap, str::Utf8Error};
+use std::collections::HashMap;
 
 use pandoc_ast::{Block, Inline};
 
-use crate::Meta;
+use crate::{Error, Meta, Result};
 
-fn get_target(meta: &mut Meta) -> Result<(String, String, String), Utf8Error> {
+fn get_target(meta: &mut Meta) -> Result<(String, String, String)> {
     let mut target = Vec::new();
     let mut description = Vec::new();
     let mut link_type = Vec::new();
@@ -18,7 +18,11 @@ fn get_target(meta: &mut Meta) -> Result<(String, String, String), Utf8Error> {
 
         match meta.tree.node().kind() {
             "link_target_url" => {
-                meta.tree.goto_next_sibling();
+                if !meta.tree.goto_next_sibling() {
+                    return Err(Error::MalformedTree(
+                        "Encountered link_target_url without an actual target",
+                    ));
+                }
                 let url = meta.tree.node().utf8_text(meta.source)?.to_string();
                 target.push(url.clone());
                 description.push(url);
@@ -32,7 +36,11 @@ fn get_target(meta: &mut Meta) -> Result<(String, String, String), Utf8Error> {
                 link_type.push("file");
             }
             "link_target_line_number" => {
-                meta.tree.goto_next_sibling();
+                if !meta.tree.goto_next_sibling() {
+                    return Err(Error::MalformedTree(
+                        "Encountered link_target_line_number without an actual target",
+                    ));
+                }
                 let line = meta.tree.node().utf8_text(meta.source)?.to_string();
                 target.push(line.clone());
                 description.push(line);
@@ -46,13 +54,19 @@ fn get_target(meta: &mut Meta) -> Result<(String, String, String), Utf8Error> {
                         .kind()
                         .chars()
                         .position(|c| c.is_ascii_digit())
-                        .expect("There is always a number in the heading kind");
+                        .ok_or(Error::MalformedTree(
+                            "Encountered heading link without nesting",
+                        ))?;
                     meta.tree.node().kind()[number_index..]
                         .parse()
-                        .expect("This is always a number")
+                        .map_err(|_| Error::MalformedTree("Couldn't parse heading link nesting"))?
                 };
 
-                meta.tree.goto_next_sibling();
+                if !meta.tree.goto_next_sibling() {
+                    return Err(Error::MalformedTree(
+                        "Encountered link_target_heading without an actual target",
+                    ));
+                }
 
                 let heading = meta.tree.node().utf8_text(meta.source)?;
 
@@ -71,25 +85,27 @@ fn get_target(meta: &mut Meta) -> Result<(String, String, String), Utf8Error> {
     Ok((target.join("#"), description.join("#"), link_type.join("#")))
 }
 
-pub fn parse(meta: &mut Meta) -> Result<Inline, Utf8Error> {
+pub fn parse(meta: &mut Meta) -> Result<Inline> {
     if meta.tree.goto_first_child() {
         if meta.tree.goto_first_child() {
             let (target, description, link_type) = get_target(meta)?;
 
             meta.tree.goto_parent();
             return if meta.tree.goto_next_sibling() {
-                super::parse(meta).map(|description| {
-                    meta.tree.goto_parent();
-                    Inline::Link(
-                        (
-                            String::new(),
-                            Vec::new(),
-                            vec![("link_type".to_string(), link_type)],
-                        ),
-                        description,
-                        (target, String::new()),
-                    )
-                })
+                super::parse(meta)
+                    .map(|description| {
+                        meta.tree.goto_parent();
+                        Inline::Link(
+                            (
+                                String::new(),
+                                Vec::new(),
+                                vec![("link_type".to_string(), link_type)],
+                            ),
+                            description,
+                            (target, String::new()),
+                        )
+                    })
+                    .map_err(Into::into)
             } else {
                 meta.tree.goto_parent();
                 Ok(Inline::Link(
@@ -113,8 +129,12 @@ pub fn parse(meta: &mut Meta) -> Result<Inline, Utf8Error> {
     ))
 }
 
-pub fn anchor_declaration(meta: &mut Meta) -> Result<Inline, Utf8Error> {
-    meta.tree.goto_first_child();
+pub fn anchor_declaration(meta: &mut Meta) -> Result<Inline> {
+    if !meta.tree.goto_first_child() {
+        return Err(Error::MalformedTree(
+            "Encountered an anchor_declaration without description",
+        ));
+    }
     let id = meta.tree.node().utf8_text(meta.source)?;
     let description = super::parse(meta)?;
     meta.tree.goto_parent();
@@ -133,12 +153,19 @@ pub fn anchor_declaration(meta: &mut Meta) -> Result<Inline, Utf8Error> {
     ))
 }
 
-pub fn anchor_definition(meta: &mut Meta) -> Result<Inline, Utf8Error> {
-    meta.tree.goto_first_child();
+pub fn anchor_definition(meta: &mut Meta) -> Result<Inline> {
+    if !meta.tree.goto_first_child() {
+        return Err(Error::MalformedTree(
+            "Encountered an anchor_definition without description",
+        ));
+    }
     let id = meta.tree.node().utf8_text(meta.source)?;
     let description = super::parse(meta)?;
-    meta.tree.goto_next_sibling();
-    meta.tree.goto_first_child();
+    if !(meta.tree.goto_next_sibling() && meta.tree.goto_first_child()) {
+        return Err(Error::MalformedTree(
+            "Encountered an anchor_definition without a target",
+        ));
+    }
     let (target, _, link_type) = get_target(meta)?;
     meta.tree.goto_parent();
     meta.tree.goto_parent();

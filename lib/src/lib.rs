@@ -1,17 +1,36 @@
 use std::str::Utf8Error;
 
-use pandoc_ast::{Map, MetaValue, Pandoc};
+use pandoc_ast::Pandoc;
+use thiserror::Error;
 use tree_sitter::{Parser, TreeCursor};
 
 mod document;
 
+/// Metadata used to parse the tree
 struct Meta<'a> {
+    /// Used to walk the tree
     tree: TreeCursor<'a>,
+    /// The source text
     source: &'a [u8],
-    metadata: Map<String, MetaValue>,
 }
 
-pub fn parse(source: &str, pandoc_api_version: Vec<u32>) -> Option<Result<Pandoc, Utf8Error>> {
+/// Errors preventing the document from being converted
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("{0}")]
+    Utf8Error(#[from] Utf8Error),
+    /// The treesitter tree was malformed. This is most likely a treesitter bug
+    #[error("The treesitter tree was malformed. This is most likely a treesitter bug\n{0}")]
+    MalformedTree(&'static str),
+}
+
+/// A result where the error type is [Error]
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// Parses the given source into a pandoc ast
+///
+/// Please supply the api version the tree is for
+pub fn parse(source: &str, pandoc_api_version: Vec<u32>) -> Option<Result<Pandoc>> {
     let language = tree_sitter_norg::language();
     let mut parser = Parser::new();
     parser
@@ -23,13 +42,13 @@ pub fn parse(source: &str, pandoc_api_version: Vec<u32>) -> Option<Result<Pandoc
             Meta {
                 tree: tree.walk(),
                 source: source.as_bytes(),
-                metadata: Map::new(),
             },
             pandoc_api_version,
         )
     })
 }
 
+/// Debug prints the tree
 fn debug(meta: &mut Meta) -> ! {
     fn print(meta: &mut Meta, indent: u8) {
         for _ in 0..indent {

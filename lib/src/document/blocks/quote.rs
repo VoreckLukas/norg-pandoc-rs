@@ -1,10 +1,8 @@
-use std::str::Utf8Error;
-
 use pandoc_ast::Block;
 
-use crate::Meta;
+use crate::{Meta, Result};
 
-pub fn parse(meta: &mut Meta) -> Result<Block, Utf8Error> {
+pub fn parse(meta: &mut Meta) -> Result<Block> {
     if meta.tree.goto_first_child() {
         parse_quote(meta).map(|(mut quote, nesting)| {
             for _ in 1..nesting {
@@ -17,7 +15,7 @@ pub fn parse(meta: &mut Meta) -> Result<Block, Utf8Error> {
     }
 }
 
-fn parse_quote(meta: &mut Meta) -> Result<(Vec<Block>, usize), Utf8Error> {
+fn parse_quote(meta: &mut Meta) -> Result<(Vec<Block>, usize)> {
     let mut content = Vec::new();
 
     let mut top_nesting = None;

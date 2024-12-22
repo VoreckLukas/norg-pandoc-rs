@@ -1,8 +1,6 @@
-use std::str::Utf8Error;
-
 use pandoc_ast::Inline;
 
-use crate::Meta;
+use crate::{Meta, Result};
 
 #[derive(PartialEq, Eq)]
 pub enum AttachedType {
@@ -16,7 +14,7 @@ pub enum AttachedType {
     Code,
 }
 
-pub fn parse(meta: &mut Meta, attached_type: AttachedType) -> Result<Inline, Utf8Error> {
+pub fn parse(meta: &mut Meta, attached_type: AttachedType) -> Result<Inline> {
     if attached_type != AttachedType::Code {
         let content = super::parse(meta)?;
         Ok(match attached_type {
@@ -34,7 +32,7 @@ pub fn parse(meta: &mut Meta, attached_type: AttachedType) -> Result<Inline, Utf
         })
     } else {
         let content = {
-            let content = meta.tree.node().utf8_text(meta.source).unwrap();
+            let content = meta.tree.node().utf8_text(meta.source)?;
             content[1..content.len() - 1].to_owned()
         };
 

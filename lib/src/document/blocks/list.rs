@@ -1,8 +1,6 @@
-use std::str::Utf8Error;
-
 use pandoc_ast::{Block, ListNumberDelim, ListNumberStyle};
 
-use crate::Meta;
+use crate::{Error, Meta, Result};
 
 enum ListType {
     Unordered,
@@ -15,7 +13,7 @@ const DEFAULT_ORDERED_ATTR: (i64, ListNumberStyle, ListNumberDelim) = (
     ListNumberDelim::DefaultDelim,
 );
 
-pub fn parse(meta: &mut Meta) -> Result<Block, Utf8Error> {
+pub fn parse(meta: &mut Meta) -> Result<Block> {
     if meta.tree.goto_first_child() {
         parse_list(meta).map(|(mut list, kind, nesting)| match kind {
             ListType::Unordered => {
@@ -32,11 +30,11 @@ pub fn parse(meta: &mut Meta) -> Result<Block, Utf8Error> {
             }
         })
     } else {
-        unreachable!()
+        Err(Error::MalformedTree("Encountered a list without children"))
     }
 }
 
-fn parse_list(meta: &mut Meta) -> Result<(Vec<Vec<Block>>, ListType, usize), Utf8Error> {
+fn parse_list(meta: &mut Meta) -> Result<(Vec<Vec<Block>>, ListType, usize)> {
     let mut list = Vec::new();
 
     let kind = match meta.tree.node().kind() {
@@ -55,16 +53,18 @@ fn parse_list(meta: &mut Meta) -> Result<(Vec<Vec<Block>>, ListType, usize), Utf
                 .kind()
                 .chars()
                 .position(|c| c.is_ascii_digit())
-                .expect("Nesting is always in the kind");
+                .ok_or(Error::MalformedTree(
+                    "Encountered a list without nesting information",
+                ))?;
             meta.tree.node().kind()[number_index..]
                 .parse()
-                .expect("This is always a number")
+                .map_err(|_| Error::MalformedTree("Couldn't parse list nesting information"))?
         };
 
         let mut content = if meta.tree.goto_first_child() && meta.tree.goto_next_sibling() {
             vec![super::paragraph(meta)?]
         } else {
-            unreachable!()
+            return Err(Error::MalformedTree("Encountered a list without content"));
         };
 
         if meta.tree.goto_next_sibling() {
